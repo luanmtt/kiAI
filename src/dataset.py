@@ -1,5 +1,4 @@
 import json
-from typing import dataclass_transform
 import pandas as pd
 from pathlib import Path
 from osu_parser import parse_osu_file
@@ -12,25 +11,6 @@ GENRE = {
     9: "hip_hop", 10: "electronic", 11: "metal",
     12: "classical", 13: "folk", 14: "jazz"
 }
-
-
-COLLECTIONS = {
-    "stream":       "stream_maps.json",
-    "farm":         "farm_maps.json",
-    "speed":        "speed_maps.json",
-    "aim_control":  "aim_control_maps.json", 
-    "aim_slop":     "aim_slop_maps.json",
-    "jump":         "jump_maps.json", 
-    "gimmick":      "gimmick_maps.json",
-    "consistency":  "consistency_maps.json",
-    "precision":    "precision_maps.json",
-    "stamina":      "stamina_maps.json",
-    "alt":          "alt_maps.json",
-    "tech":         "tech_maps.json",
-    "slider":       "slider_maps.json",
-    "reading":      "reading_maps.json",
-    "finger_control":"finger_control_maps.json"
-}   
 
 
 # --------------------------------------------------------------------------------------------------
@@ -85,52 +65,60 @@ def build_dataset(data_dir:str = "data") -> pd.DataFrame:
                 "difficulty_rating":    b.get("difficulty_rating"),
                 "count_sliders":        b.get("count_sliders"),
                 "count_circles":        b.get("count_circles"),
-                "length":               b.get("total_length"),
-                "title":                b.get("title"),
-                "artist":               b.get("artist"),
+                "total_length":         b.get("total_length"),
+                "title":                bset.get("title"),
+                "artist":               bset.get("artist"),
                 "creator":              bset.get("creator"),
                 "tags":                 bset.get("tags", ""),
                 "genre":                GENRE.get(genre_id, "unknown")
             }
 
 
-    osu_path = beatmap_dir / f"{beatmap_id}.osu"
+            osu_path = beatmap_dir / f"{beatmap_id}.osu"
 
-    if not osu_path.exists():
-        skipped_osu += 1
-        # still add the row, just with null osu features
-        row.update({
-            "base_bpm":           None,
-            "kiai_section_count": None,
-            "kiai_note_count":    None,
-            "kiai_note_ratio":    None,
-            "mean_kiai_dist":     None,
-            "interval_variance":  None,
-            "mean_interval_ms":   None,
-            "stream_density":     None,
-        })
+            if not osu_path.exists():
+                skipped_osu += 1
+                # still add the row, just with null osu features
+                row.update({
+                    "base_bpm":           None,
+                    "kiai_section_count": None,
+                    "kiai_note_count":    None,
+                    "kiai_note_ratio":    None,
+                    "mean_kiai_dist":     None,
+                    "interval_variance":  None,
+                    "mean_interval_ms":   None,
+                    "stream_density":     None,
+                    "mean_distance":    None,
+                    "std_distance":     None,
+                    "notes_per_second": None,
+                    "slider_ratio":     None,
+                    "mean_velocity":    None, 
+                })
 
-    else:
-        try:
-            parsed = parse_osu_file(str(osu_path))
-            row.update(parsed)
+            else:
+                try:
+                    parsed = parse_osu_file(str(osu_path))
+                    row.update(parsed)
 
-        except Exception as e:
-            parse_errors += 1
-            print(f"  parse error on {beatmap_id}: {e}")
-            row.update({
-                "base_bpm":           None,
-                "kiai_section_count": None,
-                "kiai_note_count":    None,
-                "kiai_note_ratio":    None,
-                "mean_kiai_dist":     None,
-                "interval_variance":  None,
-                "mean_interval_ms":   None,
-                "stream_density":     None,
-            })
+                except Exception as e:
+                    parse_errors += 1
+                    print(f"  parse error on {beatmap_id}: {e}")
+                    row.update({
+                        "base_bpm":           None,
+                        "kiai_section_count": None,
+                        "kiai_note_count":    None,
+                        "kiai_note_ratio":    None,
+                        "mean_kiai_dist":     None,
+                        "interval_variance":  None,
+                        "mean_interval_ms":   None,
+                        "stream_density":     None,
+                    })
 
-        rows.append(row)
+            rows.append(row)
 
+
+    # ---------------------
+    # passagem para o df:
 
     df = pd.DataFrame(rows)
     
@@ -150,3 +138,5 @@ def build_dataset(data_dir:str = "data") -> pd.DataFrame:
 
 
 # --------------------------------------------------------------------------------------------------
+if __name__ == "__main__":
+    build_dataset()
