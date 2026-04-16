@@ -23,8 +23,10 @@ GENRE = {
 # --------------------------------------------------------------------------------------------------
 # memory checks every 100 iterations.
 
+
 def get_dir_size_mb(path: Path) -> float:
     return sum(f.stat().st_size for f in path.rglob("*") if f.is_file()) / (1024 * 1024)
+
 
 def check_disk_space(osu_dir: Path, i: int, total: int):
     if i % 100 == 0:
@@ -49,18 +51,22 @@ def download_osu_files(data_dir: str = "data"):
             beatmaps = json.load(f)
         all_ids += [b["id"] for b in beatmaps]
 
+
     print(f"total entries : {len(all_ids)}")
     print(f"unique IDs    : {len(set(all_ids))}")
     print(f"duplicates    : {len(all_ids) - len(set(all_ids))}")
     
+
     raw_dir  = Path(data_dir) / "raw"
     osu_dir  = Path(data_dir) / "beatmaps"
     osu_dir.mkdir(parents=True, exist_ok=True)
+
 
     json_files = list(raw_dir.glob("*.json"))
     if not json_files:
         print("No JSON files found in data/raw/")
         return
+
 
     # count total maps across all files first
     all_maps = []
@@ -137,3 +143,6 @@ def download_osu_files(data_dir: str = "data"):
 
 if __name__ == "__main__":
     download_osu_files()
+
+
+# --------------------------------------------------------------------------------------------------

@@ -19,6 +19,7 @@ def get_beatmap_batch(ids: list, token: str) -> list:
 
 # --------------------------------------------------------------------------------------------------
 
+
 def get_beatmaps_bulk(ids: list, token:str, delay: float = 0.5) -> list:
 
     results = []
@@ -34,6 +35,7 @@ def get_beatmaps_bulk(ids: list, token:str, delay: float = 0.5) -> list:
 
 
 # --------------------------------------------------------------------------------------------------
+
 
 def get_ids_from_collector(collection_id:int) -> list[int]:
 

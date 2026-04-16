@@ -6,6 +6,7 @@ from dotenv import load_dotenv
 # --------------------------------------------------------------------------------------------------
 # secrets fetch
 
+
 load_dotenv()  # reads .env into environment variables
 
 CLIENT_ID     = os.getenv("OSU_CLIENT_ID")

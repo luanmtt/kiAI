@@ -16,28 +16,36 @@ GENRE = {
 # --------------------------------------------------------------------------------------------------
 # build dataset with both .osu and api-retrieved data.
 
-def build_dataset(data_dir:str = "data") -> pd.DataFrame:
 
+def build_dataset(data_dir:str = "data") -> pd.DataFrame:
+    
     raw_dir = Path(data_dir) / "raw"
     beatmap_dir = Path(data_dir) / "beatmaps"
     out_dir = Path(data_dir) / "processed"
     out_dir.mkdir(parents=True, exist_ok=True)
+
+    
+    # --------------------------------------------------------------------------------------------------
+
 
     json_files = list(raw_dir.glob("*.json"))
     if not json_files:
         print("No JSON files found in data/raw/")
         return pd.DataFrame()
    
+
     rows = []
     skipped_api  = 0
     skipped_osu  = 0
     parse_errors = 0
     seen_ids     = set()
+        
 
     for json_file in json_files:
         category = json_file.stem
         with open(json_file) as f:
             beatmaps = json.load(f)
+
 
         print(f"\nProcessing '{category}' ({len(beatmaps)} maps)...")
 
@@ -53,7 +61,6 @@ def build_dataset(data_dir:str = "data") -> pd.DataFrame:
             genre_id = bset.get("genre_id")
 
             row = {
-
                 "label":                category,
                 "id":                   beatmap_id,
                 "bpm":                  b.get("bpm"),
@@ -117,8 +124,9 @@ def build_dataset(data_dir:str = "data") -> pd.DataFrame:
             rows.append(row)
 
 
-    # ---------------------
+    # --------------------------------------------------------------------------------------------------
     # passagem para o df:
+
 
     df = pd.DataFrame(rows)
     
@@ -126,11 +134,11 @@ def build_dataset(data_dir:str = "data") -> pd.DataFrame:
     df.to_csv(out_path, index=False)
 
     print(f"\nDataset built:")
-    print(f"  total rows     : {len(df)}")
-    print(f"  skipped (dupe) : {skipped_api}")
-    print(f"  missing .osu   : {skipped_osu}")
-    print(f"  parse errors   : {parse_errors}")
-    print(f"  saved to       : {out_path}")
+    print(f"  Total rows     : {len(df)}")
+    print(f"  Skipped (dupe) : {skipped_api}")
+    print(f"  Missing .osu   : {skipped_osu}")
+    print(f"  Parse errors   : {parse_errors}")
+    print(f"  Saved to       : {out_path}")
     print(f"\nLabel distribution:")
     print(df["label"].value_counts().to_string())
 
@@ -138,5 +146,11 @@ def build_dataset(data_dir:str = "data") -> pd.DataFrame:
 
 
 # --------------------------------------------------------------------------------------------------
+# buildar dataset, mudar eventualmente para main.py
+
+
 if __name__ == "__main__":
     build_dataset()
+
+
+# --------------------------------------------------------------------------------------------------

@@ -26,8 +26,10 @@ from sklearn.metrics import classification_report
 
 
 FEATURES = [
+    
+    # drop: bpm, difficulty_rating
 
-    "bpm", "ar", "cs", "od", "difficulty_rating",
+    "ar", "cs", "od",
     "stream_density", "mean_distance", "std_distance",
     "mean_velocity", "slider_ratio", "interval_variance_log",
     "kiai_section_count", "kiai_note_ratio", "mean_kiai_dist",
@@ -49,8 +51,16 @@ FEATURES = [
 
 '''
 
-df = pd.read_csv("data/processed/dataset.csv")
+df = pd.read_csv("data/processed/augmented.csv")
 df["label"] = df["label"].str.replace("_maps", "")
+
+
+
+mask = df["label"].isin(["tech","gimmick","reading","stream"])
+subset = df[mask][["label", "stream_density", "mean_distance", "std_distance", "interval_variance_log"]]
+print(subset.groupby("label").describe().T)
+
+
 
 df = df.dropna(subset=FEATURES + ["label"])
 
@@ -66,7 +76,6 @@ y_raw = df["label"].values
     
         • ["jump", "stream", "gimmick", ...] → [0,1,2,...] 
         → o encoder tem que ser salvo posteriormente para a análise reversa dos dados.
-    
 '''
 
 le = LabelEncoder()
@@ -93,7 +102,6 @@ X_train, X_test, y_train, y_test = train_test_split(
 # scaling
 
 '''
-    
     Basicamente, fazendo uma escala comum dentre todas as features.
     →   a escala é construída apenas com dados de treino. se fosse com
         todos os dados, os dados de teste influenciam a escala, contaminando.
@@ -109,7 +117,6 @@ X_test = scaler.transform(X_test)
 # pesos para labels:
 
 '''
-   
     Temos injustiça entre labels, e para não sofrer com isso (nem cortar label de menor quantidade),
     podemos dar pesos às labels. Isso será útil, porque quando o modelo classificar erroneamente uma 
     label rara (o que faz sentido), o erro será maior e haverá aprendizado.
@@ -188,8 +195,20 @@ def build_model(input_dim: int, num_classes: int):
 
     return model
 
+
 model = build_model(input_dim=len(FEATURES), num_classes=num_classes)
 model.summary()
+
+
+
+'''
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import classification_report
+
+clf = RandomForestClassifier(n_estimators=200, class_weight="balanced", random_state=42)
+clf.fit(X_train, y_train)
+print(classification_report(y_test, clf.predict(X_test), target_names=le.classes_))
+'''
 
 
 # --------------------------------------------------------------------------------------------------
