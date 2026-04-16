@@ -1,7 +1,9 @@
-import json
-import pandas as pd
+from src.osu_parser import parse_and_feature
+
 from pathlib import Path
-from osu_parser import parse_osu_file
+import pandas as pd
+import numpy as np
+import json
 
 # --------------------------------------------------------------------------------------------------
 
@@ -46,8 +48,7 @@ def build_dataset(data_dir:str = "data") -> pd.DataFrame:
         with open(json_file) as f:
             beatmaps = json.load(f)
 
-
-        print(f"\nProcessing '{category}' ({len(beatmaps)} maps)...")
+        print(f"Processing '{category}'...     → ({len(beatmaps)} maps)")
 
         for b in beatmaps:
             beatmap_id = b["id"]
@@ -59,25 +60,34 @@ def build_dataset(data_dir:str = "data") -> pd.DataFrame:
 
             bset = b.get("beatmapset", {})
             genre_id = bset.get("genre_id")
+            
+            ar_od_ratio = round(bset.get("ar") / bset.get("od"), 4) if bset.get("od") else 0
 
             row = {
                 "label":                category,
                 "id":                   beatmap_id,
-                "bpm":                  b.get("bpm"),
-                "ar":                   b.get("ar"),
-                "cs":                   b.get("cs"),
-                "length":               b.get("hit_length"),
-                "drain":                b.get("drain"),
-                "od":                   b.get("accuracy"),
-                "difficulty_rating":    b.get("difficulty_rating"),
-                "count_sliders":        b.get("count_sliders"),
-                "count_circles":        b.get("count_circles"),
-                "total_length":         b.get("total_length"),
                 "title":                bset.get("title"),
                 "artist":               bset.get("artist"),
                 "creator":              bset.get("creator"),
-                "tags":                 bset.get("tags", ""),
+                
+                "total_length":         b.get("total_length"),
+                "star_rating":          b.get("difficulty_rating"),
+                "bpm":                  b.get("bpm"),
+                "ar":                   b.get("ar"),
+                "cs":                   b.get("cs"),
+                "hit_length":           b.get("hit_length"),
+                "od":                   b.get("accuracy"),
+                
                 "genre":                GENRE.get(genre_id, "unknown")
+                
+                #"drain":                b.get("drain"),
+                
+                # consigo com .osu.
+                #"count_sliders":        b.get("count_sliders"),
+                #"count_circles":        b.get("count_circles"),
+                
+                # Usar essa feature no futuro.
+                #"tags":                 bset.get("tags", ""),
             }
 
 
@@ -87,40 +97,76 @@ def build_dataset(data_dir:str = "data") -> pd.DataFrame:
                 skipped_osu += 1
                 # still add the row, just with null osu features
                 row.update({
-                    "base_bpm":           None,
-                    "kiai_section_count": None,
-                    "kiai_note_count":    None,
-                    "kiai_note_ratio":    None,
-                    "mean_kiai_dist":     None,
-                    "interval_variance":  None,
-                    "mean_interval_ms":   None,
-                    "stream_density":     None,
-                    "mean_distance":    None,
-                    "std_distance":     None,
-                    "notes_per_second": None,
-                    "slider_ratio":     None,
-                    "mean_velocity":    None, 
+
+                    "circles":              None,
+                    "sliders":              None,
+                    "spinners":             None,
+                    "slider_ratio":         None,
+                    "base_bpm":             None,
+                    
+                    "total_notes":          None,
+                    "mean_distance":        None,
+                    "std_distance":         None,
+                    "stream_density":       None,
+                        
+                    #"kiai_section_count":  None,
+                    "kiai_note_ratio":      None,
+                    "kiai_mean_dist":       None,
+                    "kiai_note_count":      None,
+                    
+                    "interval_variance":    None,
+                    "interval_cv":          None,
+
+                    "mean_interval_ms":     None,
+                    "notes_per_second":     None,
+                    "mean_velocity":        None, 
+                    
+                    "rhythm_complexity":    None,    
                 })
 
             else:
                 try:
-                    parsed = parse_osu_file(str(osu_path))
+                    parsed = parse_and_feature(str(osu_path))
                     row.update(parsed)
 
                 except Exception as e:
                     parse_errors += 1
                     print(f"  parse error on {beatmap_id}: {e}")
                     row.update({
-                        "base_bpm":           None,
-                        "kiai_section_count": None,
-                        "kiai_note_count":    None,
-                        "kiai_note_ratio":    None,
-                        "mean_kiai_dist":     None,
-                        "interval_variance":  None,
-                        "mean_interval_ms":   None,
-                        "stream_density":     None,
-                    })
+                            
+                        "circles":              None,
+                        "sliders":              None,
+                        "spinners":             None,
+                        "slider_ratio":         None,
+                        "base_bpm":             None,
+                        
+                        "total_notes":          None,
+                        "mean_distance":        None,
+                        "std_distance":         None,
+                        "stream_density":       None,
+                            
+                        #"kiai_section_count":  None,
+                        "kiai_note_ratio":      None,
+                        "mean_kiai_dist":       None,
+                        "kiai_note_count":      None,
+                        
+                        "interval_variance":    None,
+                        "interval_cv":          None,
 
+                        "mean_interval_ms":     None,
+                        "notes_per_second":     None,
+                        "mean_velocity":        None, 
+                        
+                        "rhythm_complexity":    None
+
+                    })
+                
+                
+            row.update({
+                "interval_variance_log":  np.log1p(row.get("interval_variance", 0)),
+                "ar_od_ratio": ar_od_ratio
+            })
+                   
             rows.append(row)
 
 
@@ -139,18 +185,9 @@ def build_dataset(data_dir:str = "data") -> pd.DataFrame:
     print(f"  Missing .osu   : {skipped_osu}")
     print(f"  Parse errors   : {parse_errors}")
     print(f"  Saved to       : {out_path}")
-    print(f"\nLabel distribution:")
-    print(df["label"].value_counts().to_string())
+    #print(f"\nLabel distribution:")
+    #print(df["label"].value_counts().to_string())
 
     return df
-
-
-# --------------------------------------------------------------------------------------------------
-# buildar dataset, mudar eventualmente para main.py
-
-
-if __name__ == "__main__":
-    build_dataset()
-
 
 # --------------------------------------------------------------------------------------------------

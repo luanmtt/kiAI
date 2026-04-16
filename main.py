@@ -1,9 +1,9 @@
-from src.auth     import get_token
-from src.fetch    import get_ids_from_collector, get_beatmaps_bulk
-from src.download import download_osu_files
-from src.dataset  import build_dataset
+from src.user import run_predict, run_retrain, run_train, get_dataset
 
 import json
+from pathlib import Path
+import os
+
 
 # --------------------------------------------------------------------------------------------------
 
@@ -33,25 +33,35 @@ COLLECTIONS = {
 
 
 if __name__ == "__main__":
-
-    token = get_token()
-
-    for category, collection_id in COLLECTIONS.items():
-
-        print(f"Fetching category {category} collection {collection_id}...")
-        ids = get_ids_from_collector(collection_id)
-        print(f"{len(ids)} beatmap IDs retrieved.")
+    
+    print("-" * 70)
+    print(20 * "-" + " kiAI: osu! map classifier: " + 20 * "-")
+    print("  [1] train       — fetch collections, build dataset, train model")
+    print("  [2] retrain     — retrain using existing dataset")
+    print("  [3] dataset     — repeat the dataset-building step")
+    print("  [4] predict     — predict map type from .osu file(s)")
+    print("  [q] quit")
         
-        print("Fetching beatmap metadata from osu!api...")
-        beatmaps = get_beatmaps_bulk(ids, token)
-        print(f"Retrieved data from {len(beatmaps)} beatmaps.")
-        
-        with open(f"data/raw/{category}_maps.json", "w") as f:
-            json.dump(beatmaps, f, indent=2)
-        print(f"Saved to /data/raw/{category}_maps.")
+    choice = input("\n> ").strip().lower()
+    
 
-        beatmaps = get_beatmaps_bulk(ids, token)
+    if choice in ("1", "train"):
+        run_train()
 
-    download_osu_files()
+    elif choice in ("2", "retrain"):
+        run_retrain()
 
-    build_dataset()
+    elif choice in ("3", "dataset"):
+        get_dataset()
+
+    elif choice in ("4", "predict"):
+        run_predict()
+
+    elif choice in ("q", "quit"):
+        print("bye!")
+
+    else:
+        print("Invalid choice.")
+
+    
+# --------------------------------------------------------------------------------------------------

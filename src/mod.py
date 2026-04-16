@@ -60,6 +60,10 @@ def perceived_ar_dt(ar):
     ms = ar_to_ms(ar)
     return round(ms_to_ar(ms / 1.5), 2)
 
+def perceived_od_dt(od):
+    window    = 80 - 6 * od
+    window_dt = window / 1.5
+    return round((80 - window_dt) / 6, 2)
 
 # --------------------------------------------------------------------------------------------------
 
@@ -93,6 +97,8 @@ def to_dt(row, new_row):
     new_row["notes_per_second"] = row["notes_per_second"] * 1.5
     new_row["mean_velocity"]    = row["mean_velocity"] * 1.5
     new_row["ar"]               = perceived_ar_dt(row["ar"])
+    new_row["od"]               = perceived_od_dt(row["od"])
+    new_row["ar_od_ratio"]      = round(new_row["ar"] / new_row["od"], 4) if new_row["od"] else 0.0
 
     return new_row
     
@@ -114,7 +120,7 @@ def to_hr(row, new_row):
 
     new_row["cs"]    = min(row["cs"]    * 1.3, 10)
     new_row["ar"]    = min(row["ar"]    * 1.4, 10)
-    new_row["drain"] = min(row["drain"] * 1.4, 10)
+    #new_row["drain"] = min(row["drain"] * 1.4, 10)
     new_row["od"]    = min(row["od"]    * 1.4, 10)
 
     return new_row

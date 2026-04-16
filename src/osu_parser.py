@@ -1,4 +1,4 @@
-from features import feature_engineering
+from src.features import feature_engineering
 import os
 
 
@@ -6,7 +6,7 @@ import os
 # parsing file:
 
 
-def parse_osu_file(filepath:str) -> dict:
+def parse_and_feature(filepath:str) -> dict:
     
     # lendo linha-a-linha cada .osu.
 
@@ -48,7 +48,7 @@ if __name__ == "__main__":
         if f.endswith(".osu")
     )
     print(f"Parsing: {sample}")
-    result = parse_osu_file(sample)
+    result = parse_and_feature(sample)
     print(json.dumps(result, indent=2))
 '''
 

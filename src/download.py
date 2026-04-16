@@ -1,9 +1,9 @@
-import os
+from pathlib import Path
+import requests
+import shutil
 import time
 import json
-import requests
-from pathlib import Path
-import shutil
+import os
 
 
 # --------------------------------------------------------------------------------------------------

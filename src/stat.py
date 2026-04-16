@@ -1,25 +1,26 @@
-import numpy as np
-import pandas as pd
-from scipy import stats
-from mod import to_dt, to_hr
+from src.mod import to_dt, to_hr
 
 import matplotlib.pyplot as plt
+from scipy import stats
 import seaborn as sns
+import pandas as pd
+import numpy as np
+
 
 
 # --------------------------------------------------------------------------------------------------
 # label stat analysis:
 
 
-features = ["ar", "cs", "od", "drain", "difficulty_rating", "base_bpm"]
+features = ["ar", "cs", "od", "star_rating", "base_bpm"]
 
 MOD_FEATURES = {
-        "dt": ["base_bpm", "notes_per_second", "mean_interval_ms"],   # DT raises these
-        "hr": ["ar", "cs", "od", "drain"],                             # HR raises these
+        "dt": ["base_bpm", "notes_per_second", "mean_interval_ms"],  # DT raises these
+        "hr": ["ar", "cs", "od"],                                             # HR raises these
     }
    
 
-def stats_analysis(df: pd.DataFrame):
+def stats_analysis(df: pd.DataFrame) -> pd.DataFrame:
     '''
         
         • Aqui, vamos analisar estatisticamente as features base seguintes:
@@ -83,8 +84,9 @@ def stats_analysis(df: pd.DataFrame):
     stats_df = pd.DataFrame(statistics)
     stats_df.to_csv("results/eda/eda_stats.csv", index=False)
     
-    print("Saved stats.")
-    print(stats_df.to_string())
+    print("\nSaved statistics. Proceeding to mod application: ")
+
+    #print(stats_df.to_string())
 
     return stats_df
      
@@ -185,7 +187,7 @@ def are_mods_needed(row, expectations):
 # apply mods:
 
 
-def apply_mods(df: pd.DataFrame, stats_df: pd.DataFrame):
+def apply_mods(df: pd.DataFrame, stats_df: pd.DataFrame) -> pd.DataFrame:
 
     expectations = build_expectations(stats_df, MOD_FEATURES["dt"] + MOD_FEATURES["hr"]) 
     
@@ -210,11 +212,14 @@ def apply_mods(df: pd.DataFrame, stats_df: pd.DataFrame):
         augmented_rows.append(new_row)
 
     augmented_df = pd.concat([df, pd.DataFrame(augmented_rows)], ignore_index=True)
-    augmented_df.to_csv("data/processed/augmented.csv", index=False)
+    #augmented_df.to_csv("data/processed/augmented.csv", index=False)
+    
+    print("Dataset updated:")
+    print(f"  Original rows     : {len(df)}")
+    print(f"  Augmented rows    : {len(augmented_rows)}")
+    print(f"  New total         : {len(augmented_df)}")
 
-    print(f"Original rows: {len(df)}")
-    print(f"Augmented rows: {len(augmented_rows)}")
-    print(f"Total: {len(augmented_df)}")
+    return augmented_df
 
 
 # --------------------------------------------------------------------------------------------------
@@ -284,13 +289,12 @@ def plot_edas(df: pd.DataFrame, stats_df: pd.DataFrame):
 # teste se necessário:
 
 
+'''
 if __name__ == "__main__":
         
 
     df = pd.read_csv("data/processed/dataset.csv")
     
-    df["label"] = df["label"].str.replace("farm", "dt_farm")
-
     # rodar análise
     stats_df = stats_analysis(df)
 
@@ -299,6 +303,6 @@ if __name__ == "__main__":
     
     # rodar possível aplicação de mods
     apply_mods(df, stats_df)
-    
+'''   
 
 # --------------------------------------------------------------------------------------------------
