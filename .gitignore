@@ -1,0 +1,7 @@
+.env
+data/beatmaps/
+__pycache__/
+kiai/
+todo
+past_attempts/
+results/

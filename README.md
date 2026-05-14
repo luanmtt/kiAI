@@ -122,7 +122,7 @@ Features are split into two tiers:
 Extracted directly from the JSON responses. Fast, always available.
 
 - BPM, AR, CS, OD, HP, star rating
-- Hit length, total length, break ratio (`total_length - hit_length`)
+- Hit length, total length
 - Circle count, slider count, spinner count
 - Slider ratio (`count_sliders / (count_circles + count_sliders)`)
 - Max combo

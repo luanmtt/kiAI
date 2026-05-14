@@ -92,7 +92,7 @@ def to_dt(row, new_row):
 
     new_row["base_bpm"]         = np.floor(row["base_bpm"] * 1.5)
     new_row["bpm"]              = np.floor(row["bpm"] * 1.5)
-    new_row["length"]           = np.floor(row["length"] * 0.67)
+    new_row["total_length"]     = np.floor(row["total_length"] * 0.67)
     new_row["mean_interval_ms"] = row["mean_interval_ms"] / 1.5
     new_row["notes_per_second"] = row["notes_per_second"] * 1.5
     new_row["mean_velocity"]    = row["mean_velocity"] * 1.5

@@ -5,15 +5,15 @@ import numpy as np
 import pandas as pd
 import pickle
 import keras
-
+ 
 from sklearn.preprocessing import LabelEncoder, StandardScaler
 from sklearn.utils.class_weight import compute_class_weight
-from sklearn.model_selection import train_test_split
+from sklearn.model_selection import train_test_split, StratifiedKFold
+from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import classification_report
 
 
 '''
-    
     train_test_split    → faz o split dos dados em teste, treino
     LabelEncoder        → faz o processo de codificação "label" → índice
     StandardScaler      → normaliza cada feature tal que mean=0 e std=1
@@ -45,24 +45,26 @@ FEATURES  = [
     "kiai_mean_dist",
     "kiai_note_count",
     
-    "interval_cv", 
+    #"interval_cv", 
     "interval_variance_log",
-    
+        
+    "mean_interval_ms",
     "notes_per_second", 
     "mean_velocity", 
+    "mean_sliders_length",
 
     "rhythm_complexity",
+    "burst_density",
+    "speed_index",
+    "alt_ratio",
+
     "ar_od_ratio"
 
 ]
 
 
-def train():
-
-# --------------------------------------------------------------------------------------------------
-# importar dataset.csv
-
-
+def train(model_choice:str = "keras"):
+    
     '''
         
         Importando o .csv normalmente. Aqui, retiramos todos os linhas que possuem NaN.
@@ -73,20 +75,22 @@ def train():
                 ...
 
     '''
+    
+    print("Starting training: \n") 
 
     df = pd.read_csv("data/processed/augmented.csv")
-    #df["label"] = df["label"].str.replace("_maps", "")
+    df = df.dropna(subset=FEATURES + ["label"])
+    
 
-
+    '''
     # checando classes:
     mask = df["label"].isin(["tech","gimmick","reading","stream"])
     subset = df[mask][["label", "stream_density", "mean_distance", "std_distance", "interval_variance_log"]]
-    print(subset.groupby("label").describe().T)
-    
-    exit()
-   
-    df = df.dropna(subset=FEATURES + ["label"])
+    subset = subset.groupby("label").describe().T
+    subset.to_csv("results/analysis.csv", index=False)
 
+    '''
+   
     X = df[FEATURES].values
     y_raw = df["label"].values
 
@@ -105,8 +109,7 @@ def train():
     y = le.fit_transform(y_raw)
     num_classes = int(np.array(le.classes_).size)
 
-
-    print(f"Classes ({num_classes}): {le.classes_}")
+    #print(f"Classes ({num_classes}): {le.classes_}")
 
 
     # --------------------------------------------------------------------------------------------------
@@ -199,11 +202,22 @@ def train():
     def build_model(input_dim: int, num_classes: int):
 
         model = keras.Sequential([
+                
+                #keras.layers.Input(shape=(input_dim,)),
+                #keras.layers.Dense(128, activation="relu"),
+                #keras.layers.Dropout(0.3),
+                #keras.layers.Dense(64,activation="relu"),
+                #keras.layers.Dropout(0.2),
+                #keras.layers.Dense(num_classes, activation="softmax"),
             
             keras.layers.Input(shape=(input_dim,)),
-            keras.layers.Dense(128, activation="relu"),
+            keras.layers.Dense(256, activation="relu"),
+            keras.layers.BatchNormalization(),        # stabilizes training on larger datasets
             keras.layers.Dropout(0.3),
-            keras.layers.Dense(64,activation="relu"),
+            keras.layers.Dense(128, activation="relu"),
+            keras.layers.BatchNormalization(),
+            keras.layers.Dropout(0.3),
+            keras.layers.Dense(64, activation="relu"),
             keras.layers.Dropout(0.2),
             keras.layers.Dense(num_classes, activation="softmax"),
 
@@ -211,7 +225,9 @@ def train():
 
         model.compile(
             
-            optimizer="adam",
+            optimizer = keras.optimizers.AdamW(learning_rate=0.001, weight_decay=0.01),
+
+            #optimizer="adam",
             loss="sparse_categorical_crossentropy",
             metrics=["accuracy"]
         )
@@ -219,77 +235,126 @@ def train():
         return model
 
 
-    model = build_model(input_dim=len(FEATURES), num_classes=num_classes)
-    model.summary()
 
+# --------------------------------------------------------------------------------------------------
 
-    '''
-    from sklearn.ensemble import RandomForestClassifier
-    from sklearn.metrics import classification_report
+    
+    match model_choice:
 
-    clf = RandomForestClassifier(n_estimators=200, class_weight="balanced", random_state=42)
-    clf.fit(X_train, y_train)
-    print(classification_report(y_test, clf.predict(X_test), target_names=le.classes_))
-    '''
-
-
-    # --------------------------------------------------------------------------------------------------
-    # treinamento do modelo:
-
-    '''
-        Algumas características notáveis:
-
-            → validation_split: prevêm overfitting no começo do projeto segurando 10% dos dados de treino.
-            → 50 epochs, sendo os pesos atualizados depois de 32 mapas.
-            → passa o class_weight_dict criado na etapa de 'pesos para labels'.
-            → o callbacks vai parar o treinamento se, por 5 epochs, não for observado melhora no custo.
-    '''
-
-
-    history = model.fit(
-
-        X_train, y_train,
-        epochs=50,
-        batch_size=32,
-        validation_split=0.1,
-        class_weight=class_weight_dict,
-        callbacks= [
-            keras.callbacks.EarlyStopping(patience=5, restore_best_weights=True)
-        ]
-    )
-
-
-    # --------------------------------------------------------------------------------------------------
-    # evaluação:
-
-    '''
-        model.evaluate() retorna precisão, retomada e F1 para cada classe. isto é:
+        case "keras":
+            model = build_model(input_dim=len(FEATURES), num_classes=num_classes)
+            model.summary()
             
-            → precisão: de todos os previstos como jump, quais eram de fato jump?
-            → retomada: de todos os mapas que eram de fato jump, quantos foram previstos?
-            → F1: a média desses parâmetros acima. é, no fim de tudo, a nota do modelo.
-    '''
+            # treinamento do modelo:
 
-    loss, acc = model.evaluate(X_test, y_test, verbose="silent")
-    print(f"Test accuracy: {acc:.4f}")
+            '''
+                Algumas características notáveis:
 
-    y_pred = np.argmax(model.predict(X_test), axis=1)
+                    → validation_split: prevêm overfitting no começo do projeto segurando 10% dos dados de treino.
+                    → 50 epochs, sendo os pesos atualizados depois de 32 mapas.
+                    → passa o class_weight_dict criado na etapa de 'pesos para labels'.
+                    → o callbacks vai parar o treinamento se, por 5 epochs, não for observado melhora no custo.
+            '''
 
-    print(classification_report(y_test, y_pred, target_names=le.classes_))
+
+            history = model.fit(
+
+                X_train, y_train,
+                epochs=50,
+                batch_size=32,
+                validation_split=0.1,
+                class_weight=class_weight_dict,
+                callbacks= [
+                    keras.callbacks.ReduceLROnPlateau(monitor="val_loss", factor=0.5, patience=3, min_lr=1e-5),
+                    
+                    keras.callbacks.EarlyStopping(patience=5, restore_best_weights=True),
+                    #print(" EARLY STOPPING: LOSS FUNCTION HAS STAGNATED")
+                ]
+            )
 
 
-    # --------------------------------------------------------------------------------------------------
-    # salvar modelo:
+            # --------------------------------------------------------------------------------------------------
+            # evaluação:
 
-    '''
-        Salvando: modelo, scaler das labels e o LabelEncoder, também das labels.
-    '''
+            '''
+                model.evaluate() retorna precisão, retomada e F1 para cada classe. isto é:
+                    
+                    → precisão: de todos os previstos como jump, quais eram de fato jump?
+                    → retomada: de todos os mapas que eram de fato jump, quantos foram previstos?
+                    → F1: a média desses parâmetros acima. é, no fim de tudo, a nota do modelo.
+            '''
 
-    model.save("models/model.keras")
-    pickle.dump(scaler, open("data/processed/scaler.pkl", "wb"))
-    pickle.dump(le, open("data/processed/le.pkl", "wb"))
+            loss, acc = model.evaluate(X_test, y_test, verbose="silent")
+            print(f"Test accuracy: {acc:.4f}")
 
-    print("Saved model, scaler and LE.")
+            y_pred = np.argmax(model.predict(X_test), axis=1)
+
+            print(classification_report(y_test, y_pred, target_names=le.classes_))
+
+
+            # --------------------------------------------------------------------------------------------------
+            # salvar modelo:
+
+            '''
+                Salvando: modelo, scaler das labels e o LabelEncoder, também das labels.
+            '''
+
+            model.save("models/model.keras")
+            pickle.dump(scaler, open("data/processed/scaler.pkl", "wb"))
+            pickle.dump(le, open("data/processed/le.pkl", "wb"))
+
+            print("Saved model, scaler and LE.")
+            
+        
+        case "forest":
+            
+            '''
+                
+                Por falta de alternativas de melhora do modelo em Keras, fui tentar outro
+                modelo de classificação por sugestão do meu amigo Claude. 
+
+                Um RandomForestClassifier funciona com árvores de decisão espalhadas pelas
+                labels e as combinações de features que levam às labels. Isso torna cada árvore,
+                na prática, uma especialista na ação de determinada feature em determinada label.
+
+                O modelo decide após concordância em conselho dessas DecisionTrees. Isso é chamado
+                de ensemble learning.
+                
+                Além disso, esse modelo do scipy possui informações sobre a importância de cada feature para
+                o modelo. 
+
+                → Resultado: o modelo de RandomForestClassifier performa 12% melhor do que a small-net do Keras.
+
+            '''
+
+            clf = RandomForestClassifier(
+                    n_estimators=400,
+                    max_depth=None,
+                    class_weight="balanced", 
+                    random_state=42,
+                    n_jobs=-1 
+            )
+
+            clf.fit(X_train, y_train)
+            print(classification_report(y_test, clf.predict(X_test), target_names=le.classes_))
+            
+            '''
+            importances = pd.Series(clf.feature_importances_, index=FEATURES)
+            print(importances.sort_values(ascending=False))
+            '''
+    
+        
+        case "cross-fold":
+
+            skf = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)
+            
+            loss, acc = skf.evaluate(X_test, y_test, verbose="silent")
+            print(f"Test accuracy: {acc:.4f}")
+
+            y_pred = np.argmax(skf.predict(X_test), axis=1)
+
+            print(classification_report(y_test, y_pred, target_names=le.classes_))
+
 
 
 # --------------------------------------------------------------------------------------------------

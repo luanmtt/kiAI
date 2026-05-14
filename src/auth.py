@@ -26,7 +26,7 @@ def get_token() -> str:
     json={
         "client_id": CLIENT_ID,
         "client_secret": CLIENT_SECRET,
-        "grant_type": "clihttps:https://www.instagram.com/p/DXFWQOXiU2i///www.instagram.com/p/DXFWQOXiU2i/ent_credentials",
+        "grant_type": "client_credentials",
         "scope": "public"
     })
     

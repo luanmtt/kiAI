@@ -93,6 +93,9 @@ def download_osu_files(data_dir: str = "data"):
         beatmap_id = b["id"]
         out_path   = osu_dir / f"{beatmap_id}.osu"
 
+        if b["mode"] in ["mania", "taiko", "fruits"]:
+            continue
+
         # skip if already downloaded (safe to re-run)
         if out_path.exists() and out_path.stat().st_size > 0:
             skipped += 1

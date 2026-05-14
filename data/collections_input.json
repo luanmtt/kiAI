@@ -1,0 +1,17 @@
+{
+    "stream": [1661],
+    "dt_farm": [2620],
+    "speed": [11990],
+    "aim_control": [8834],
+    "aim_slop": [19593],
+    "jump": [5995],
+    "gimmick": [10393,19877],
+    "consistency": [12062],
+    "precision": [15376],
+    "stamina": [11819],
+    "alt": [3986],
+    "tech": [18311],
+    "slider": [8799,4264],
+    "reading": [6694,17672],
+    "finger_control": [8406]
+}

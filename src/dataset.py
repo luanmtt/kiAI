@@ -61,7 +61,7 @@ def build_dataset(data_dir:str = "data") -> pd.DataFrame:
             bset = b.get("beatmapset", {})
             genre_id = bset.get("genre_id")
             
-            ar_od_ratio = round(bset.get("ar") / bset.get("od"), 4) if bset.get("od") else 0
+            ar_od_ratio = round(bset.get("ar") / bset.get("od"), 2) if bset.get("od") else 0
 
             row = {
                 "label":                category,
@@ -115,13 +115,18 @@ def build_dataset(data_dir:str = "data") -> pd.DataFrame:
                     "kiai_note_count":      None,
                     
                     "interval_variance":    None,
-                    "interval_cv":          None,
+                    #"interval_cv":          None,
 
                     "mean_interval_ms":     None,
                     "notes_per_second":     None,
                     "mean_velocity":        None, 
+                    "mean_sliders_length":    None,
                     
-                    "rhythm_complexity":    None,    
+                    "rhythm_complexity":    None, 
+                    "burst_density":        None,
+                    "speed_index":          None,
+                    "alt_ratio":            None,
+
                 })
 
             else:
@@ -151,19 +156,27 @@ def build_dataset(data_dir:str = "data") -> pd.DataFrame:
                         "kiai_note_count":      None,
                         
                         "interval_variance":    None,
-                        "interval_cv":          None,
+                        #"interval_cv":          None,
 
                         "mean_interval_ms":     None,
                         "notes_per_second":     None,
                         "mean_velocity":        None, 
+                        "mean_sliders_length":   None,
                         
-                        "rhythm_complexity":    None
+                        "rhythm_complexity":    None,
+                        "burst_density":        None,
+                        "speed_index":          None,
+                        "alt_ratio":            None,
+
 
                     })
                 
-                
+            
+            
+            # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+            # introdução de algumas features relacionadas a AR, que não 
             row.update({
-                "interval_variance_log":  np.log1p(row.get("interval_variance", 0)),
+                "interval_variance_log":  round(np.log1p(row.get("interval_variance") or 0), 2),
                 "ar_od_ratio": ar_od_ratio
             })
                    

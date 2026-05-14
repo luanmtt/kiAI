@@ -1,11 +1,14 @@
+import numpy as np
 import math
 
+
+# 
 
 # --------------------------------------------------------------------------------------------------
 # feature engineering para complementar dataset
 
 
-def feature_engineering(sections: dict) -> dict:
+def feature_engineering(sections: dict, feedback:str = "kiai") -> dict:
     
      
     # --------------------------------------------------------------------------------------------------
@@ -86,6 +89,7 @@ def feature_engineering(sections: dict) -> dict:
     # --------------------------------------------------------------------------------------------------
     # função auxiliar
 
+
     def in_kiai(t):
         return any(start <= t <= end for start, end in kiai_ranges)
     
@@ -113,7 +117,7 @@ def feature_engineering(sections: dict) -> dict:
     
     # tamanho, em notas, do kiai.
     # nos ajuda a determinar categorias com muitas notas/kiai : stream, tech.
-    kiai_note_ratio = round(len(kiai_obj) / total_notes, 4) if total_notes else 0
+    kiai_note_ratio = round(len(kiai_obj) / total_notes, 2) if total_notes else 0
     
     # distância média dentro do kiai.
     # nos ajuda a distinguir mapas com baixa / altas distâncias.
@@ -163,41 +167,67 @@ def feature_engineering(sections: dict) -> dict:
 
     if intervals:
         # desenvolvimento estatístico dos INTERVALOS TEMPORAIS entre as notas.
-        mean_interval   = round(sum(intervals) / len(intervals))
+        mean_interval   = round(sum(intervals) / len(intervals), 2)
         var_interval    = round(sum((x - mean_interval)**2 for x in intervals) / len(intervals), 2)
         std_interval    = round(math.sqrt(sum((x - mean_interval)**2 for x in intervals) / len(intervals)), 2) if intervals else 0.0
 
     else:
         mean_interval = var_interval = std_interval = 0.0
     
+    
+    # proporção entre intervalos consecutivos. se indicar proporção perto de 2, estamos vendo um alt.
+    # diferencia satsfatoriamente stream / alt 
+    interval_pairs = [intervals[i] / intervals[i+1] for i in range(len(intervals) -1) if intervals[i+1] > 0]
+    
+
+    # a compilação de todos os pares de intervalos.
+    alt_ratio = round(sum(1 for r in interval_pairs if 1.8 <= r <= 2.2) / len(interval_pairs), 2) if interval_pairs else 0.0
+    
 
 
+    # --------------------------------------------------------------------------------------------------
+    
     stream_density = 0.0
+    burst_density = 0.0
+
     if base_bpm and intervals:
 
         stream_threshold = 60000 / (base_bpm * 4) * 1.1
         stream_count = sum(1 for iv in intervals if iv <= stream_threshold)
        
-
         # proporção entre tempo_stream : tempo_total
         # muito bom para determinar stream / stamina
-        stream_density = round(stream_count / len(intervals), 4)
+        stream_density = round(stream_count / len(intervals), 2)
+
+        # contando a presença de bursts para feature abaixo
+        burst_count = sum(1 for i in range(len(intervals)-1) if intervals[i] < stream_threshold and intervals[i+1] > 2 * stream_threshold)
+           
+        # vamos fazer a mesma feature stream_density, agora para bursts
+        # útil para identificar stream / speed
+        burst_density = round(burst_count / len(intervals), 2) if intervals else 0.0
 
     
+
     # a proporção de sliders : notas totais.
     # pode ser útil na identificação de tech, consistency
-    slider_ratio = round(sliders / total_notes, 4) if total_notes else 0
+    slider_ratio = round(sliders / total_notes, 2) if total_notes else 0
     
 
     # velocidade média do mapa.
     # pode ser útil na separação de jump / stream 
-    mean_velocity = round(mean_distance / mean_interval if mean_interval else 0.0, 4)
+    mean_velocity = round(mean_distance / mean_interval if mean_interval else 0.0, 2)
    
 
     # notas por segundo.
     # muito útil para identificar stamina / stream
-    notes_per_second = round(total_notes / (length_ms / 1000), 4) if length_ms else 0.0
+    notes_per_second = round(total_notes / (length_ms / 1000), 2) if length_ms else 0.0
+    
 
+    # identificando mapas speed 
+    #   → se alto, speed
+    #   → se baixo, stream
+    #   → se quase nulo, tipo diferente
+    speed_index =  round(base_bpm * stream_density, 2) if base_bpm is not None else 0.0
 
 
     # --------------------------------------------------------------------------------------------------
@@ -208,47 +238,100 @@ def feature_engineering(sections: dict) -> dict:
     # complexidade de ritmo:    → alto = muitas mudanças de ritmo, indicativo de tech, gimmick
     #                           → baixo = poucas mudanças, stream, stamina
     unique_variations = len(set(round(ivs, 0) for ivs in intervals))
-    rhythm_complexity = round(unique_variations / len(intervals), 4) if intervals else 0.0
+    rhythm_complexity = round(unique_variations / len(intervals), 2) if intervals else 0.0
     
 
     # coeficiente de variação dos intervalos:   → alto: alt, tech, gimmick
     #                                           → baixo: stream, stamina
-    interval_cv = round((std_interval / mean_interval), 4) if mean_interval else 0.0
+    interval_cv = round((std_interval / mean_interval), 2) if mean_interval else 0.0
     
+
+    # calculando o tempo de slider. 
+    slider_times = [hit_obj[i+1][2] - hit_obj[i][2] for i in range(len(hit_obj)-1) if hit_obj[i][3] & 2]
+
+    mean_sliders_length = round(sum(slider_times) / len(slider_times), 2) if slider_times else 0
+    std_slider_length  = round(np.std(slider_times), 2) if slider_times else 0
 
 
     # --------------------------------------------------------------------------------------------------
     # retorno dos dados:
 
+    if feedback == "kiai":
 
-    return {
+        return {
 
-        "circles":              circles,
-        "sliders":              sliders,
-        "spinners":             spinners,
-        "slider_ratio":         slider_ratio,
-        "base_bpm":             base_bpm,
+            "circles":              circles,
+            "sliders":              sliders,
+            "spinners":             spinners,
+            "slider_ratio":         slider_ratio,
+            "base_bpm":             base_bpm,
 
-        "total_notes":          total_notes,
-        "mean_distance":        mean_distance,
-        "std_distance":         std_distance,
-        "stream_density":       stream_density,
-        
-        #"kiai_section_count":   kiai_section_count,
-        "kiai_note_ratio":      kiai_note_ratio,
-        "kiai_mean_dist":       kiai_mean_dist,
-        "kiai_note_count":      kiai_note_count,
-                   
-        "interval_variance":    var_interval,
-        "interval_cv":          interval_cv,
+            "total_notes":          total_notes,
+            "mean_distance":        mean_distance,
+            "std_distance":         std_distance,
+            "stream_density":       stream_density,
+            
+            #"kiai_section_count":   kiai_section_count,
+            "kiai_note_ratio":      kiai_note_ratio,
+            "kiai_mean_dist":       kiai_mean_dist,
+            "kiai_note_count":      kiai_note_count,
+                       
+            "interval_variance":    var_interval,
+            #"interval_cv":          interval_cv,
 
-        "mean_interval_ms":     mean_interval,
-        "notes_per_second":     notes_per_second,
-        "mean_velocity":        mean_velocity,
-        
-        "rhythm_complexity":    rhythm_complexity,
+            "mean_interval_ms":     mean_interval,
+            "notes_per_second":     notes_per_second,
+            "mean_velocity":        mean_velocity,
+            "mean_sliders_length":  mean_sliders_length,
+            
+            "rhythm_complexity":    rhythm_complexity,
+            "burst_density":        burst_density,
+            "speed_index":          speed_index,
+            "alt_ratio":            alt_ratio
 
-    }
 
+        }
+    
+    elif feedback == "balanced":
+    
+        return {
+
+            "circles":              circles,
+            "sliders":              sliders,
+            "spinners":             spinners,
+            "slider_ratio":         slider_ratio,
+            "base_bpm":             base_bpm,
+
+            "total_notes":          total_notes,
+            "mean_distance":        mean_distance,
+            "std_distance":         std_distance,
+            "stream_density":       stream_density,
+            
+            #"kiai_section_count":   kiai_section_count,
+            "kiai_note_ratio":      kiai_note_ratio,
+            "kiai_mean_dist":       kiai_mean_dist,
+            "kiai_note_count":      kiai_note_count,
+                       
+            "interval_variance":    var_interval,
+            #"interval_cv":          interval_cv,
+
+            "mean_interval_ms":     mean_interval,
+            "notes_per_second":     notes_per_second,
+            "mean_velocity":        mean_velocity,
+            "std_slider_length":    std_slider_length,
+            
+            "rhythm_complexity":    rhythm_complexity,
+
+        }
+   
+
+
+    elif feedback == "general":
+
+        print("WIP")
+        return {}
+
+
+    return {}
 
 # --------------------------------------------------------------------------------------------------

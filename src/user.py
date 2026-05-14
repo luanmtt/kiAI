@@ -1,5 +1,5 @@
+from src.stat import stats_analysis, apply_mods, plot_edas, reliability_check
 from src.fetch import get_ids_from_collector, get_beatmaps_bulk
-from src.stat import stats_analysis, apply_mods
 from src.osu_parser import parse_and_feature
 from src.download import download_osu_files
 from src.dataset import build_dataset
@@ -42,7 +42,7 @@ def check_collections_input() -> dict:
     Creates a template if it doesn't exist.
     """
     
-    print("kiAI needs to install the json+.osu files to start the training.\n")
+    print("kiAI needs to install the json+.osu files to start the training.")
     print("Searching for 'collections_input'...")
 
     path = Path("data/collections_input.json")
@@ -65,14 +65,16 @@ def check_collections_input() -> dict:
         print(f"collections_input.json is missing labels: {missing}")
         return {}
 
+    #for k, v in collections.items():
+        #print(f"found {k}: {v}")
+
 
     filled = {k: v for k, v in collections.items() if v != 0}
     if not filled:
         print("collections_input.json has no collection IDs filled in.")
         return {}
-
-
-    print(f"Found {len(filled)} collection(s): {list(filled.keys())}")
+    
+    #print(f"Found {len(filled)} collection(s): {list(filled.keys())}")
     return filled
 
 
@@ -81,8 +83,8 @@ def check_collections_input() -> dict:
 
 def get_dataset():
 
-    print("-" * 70)
-    print(20 * "-" + " Build dataset: " + 20 * "-" + "\n")
+    print("━" * 70)
+    print(20 * "━" + " Build dataset: " + 30 * "━" + "\n")
     
     # build dataset
     build_dataset()
@@ -99,8 +101,8 @@ def get_dataset():
 
 def run_train():
     
-    print("-" * 70)
-    print(20 * "-" + " Train model: " + 20 * "-" + "\n")
+    print("━" * 70)
+    print(20 * "━" + " Train model: " + 30 * "━" + "\n")
 
     collections = check_collections_input()
     if not collections:
@@ -111,7 +113,9 @@ def run_train():
     for category, collection_id in collections.items():
         
         print(f"Fetching category {category} collection {collection_id}...")
-        ids = get_ids_from_collector(collection_id)
+        ids = []
+        for col_id in collection_id:
+            ids = get_ids_from_collector(col_id)
         print(f"{len(ids)} beatmap IDs retrieved.")
         
 
@@ -131,22 +135,20 @@ def run_train():
         print(f"Saved to /data/raw/{category}_maps.")
     
 
-        # download .osu files from osu!collector retrieved ids
-        download_osu_files()
+    # download .osu files from osu!collector retrieved ids
+    download_osu_files()
         
 
-        # build dataset
-        build_dataset()
+    # build dataset
+    build_dataset()
 
-        # stat analysis + mod augmentation
-        df       = pd.read_csv("data/processed/dataset.csv")
-        stats_df = stats_analysis(df)
-        df_aug   = apply_mods(df, stats_df)
-        df_aug.to_csv("data/processed/augmented.csv", index=False)
-        
+    # stat analysis + mod augmentation
+    df       = pd.read_csv("data/processed/dataset.csv")
+    stats_df = stats_analysis(df)
+    df_aug   = apply_mods(df, stats_df)
+    df_aug.to_csv("data/processed/augmented.csv", index=False)
 
-
-        train()
+    train()
 
 
 # --------------------------------------------------------------------------------------------------
@@ -154,8 +156,8 @@ def run_train():
 
 def run_retrain():
     
-    print("-" * 70)
-    print(20 * "-" + " Retrain model: " + 20 * "-" + "\n")
+    print("━" * 70)
+    print(20 * "━" + " Retrain model: " + 30 * "━" + "\n")
 
     aug  = Path("data/processed/augmented.csv")
     base = Path("data/processed/dataset.csv")
@@ -179,10 +181,10 @@ def run_retrain():
 
 def run_predict():
 
-    print("-" * 70)
-    print(20 * "-" + " Predict submissions: " + 20 * "-" + "\n\n")
+    print("━" * 70)
+    print(20 * "━" + " Predict submissions: " + 30 * "━" + "\n\n")
     
-    model_dir = Path("data/results")
+    model_dir = Path("results/")
 
     required  = ["model.keras", "scaler.pkl", "label_encoder.pkl"]
     missing   = [f for f in required if not (model_dir / f).exists()]
@@ -212,3 +214,40 @@ def run_predict():
 
 
 # --------------------------------------------------------------------------------------------------
+
+
+def run_stat_eda(csv: str):
+
+    print("━" * 70)
+    print(20 * "━" + " EDAs and Stats: " + 30 * "━" + "\n\n")
+    
+    if(csv == "aug"):
+        df = pd.read_csv("data/processed/dataset.csv")
+    else:
+        df = pd.read_csv("data/processed/augmented.csv")
+
+    stats_df = stats_analysis(df)
+    
+    #apply_mods(df, stats_df)
+
+    plot_edas(df,stats_df)
+    
+    SUBSET= [   
+                "aim_slop",
+                "dt_farm",
+                "precision",
+                "stamina",
+                "stream",
+            ]
+    
+    CLASSES = [
+                "label",
+                "kiai_note_ratio",
+                "kiai_mean_dist",
+                "stream_density", 
+                "mean_interval_ms",
+              ]
+
+    reliability_check(df, SUBSET, CLASSES)
+
+    # ──────────────────────────────────────────────────────────────────────────────────────────────────
