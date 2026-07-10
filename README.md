@@ -215,29 +215,37 @@ than categories with clear physical signatures (e.g. "stream", "slider map").
 
 ```
 kiAI/
-├── data/
-│   ├── raw/                # one JSON per category from osu! API
-│   ├── beatmaps/           # raw .osu files, named {beatmap_id}.osu
-│   └── processed/
-│       └── dataset.csv     # flat feature matrix with labels
+├── main.py               # entry point — menu, dispatches to src/user.py
+├── requirements.txt      # dependencies
+├── kiAI.md               # architecture diagram
+│
 ├── src/
-│   ├── auth.py             # OAuth token fetch
-│   ├── fetch.py            # collection ID fetch + beatmap batch fetch
-│   ├── download.py         # .osu file downloader with disk safety
-│   ├── parser.py           # .osu file parser (hit objects, timing, kiai)
-│   ├── features.py         # feature engineering
-│   ├── dataset.py          # assembles dataset.csv
-│   └── model.py            # Keras model definition
+│   ├── auth.py           # OAuth token fetch (client credentials)
+│   ├── fetch.py          # osu!collector ID fetch + osu! API batch fetch
+│   ├── download.py       # .osu file downloader with disk safety
+│   ├── osu_parser.py     # .osu file parser → sections dict
+│   ├── features.py       # feature engineering (hit objects, timing, kiai)
+│   ├── dataset.py        # assembles dataset.csv from API + .osu features
+│   ├── mod.py            # DT/HR mod application (perceived AR/OD, BPM scaling)
+│   ├── stat.py           # statistical analysis, mod augmentation, expectations
+│   ├── eda.py            # visualizations: distributions, correlation, label counts
+│   ├── model.py          # Keras model definition + training
+│   ├── predict.py        # prediction pipeline (WIP)
+│   └── user.py           # CLI dispatch: train, retrain, dataset, predict, stats
+│
+├── utils/
+│   └── embellish.py      # terminal styling: colorPrint, stylePrint, separators
+│
+├── data/
+│   ├── raw/              # one JSON per category from osu! API
+│   ├── beatmaps/         # raw .osu files, named {beatmap_id}.osu
+│   └── processed/
+│       ├── dataset.csv   # flat feature matrix with labels
+│       └── augmented.csv # dataset + mod-augmented rows
 │
 ├── models/
 │   └── model.keras
 │
-├── results/
-│   ├── eda/                # has stuff, but WIP
-│   ├── le.pkl
-│   └── scaler.pkl
-│
-├── notebook.ipynb          # WIP        
-│
-└── README.md
+└── results/
+    └── eda/              # generated plots and stats
 ```

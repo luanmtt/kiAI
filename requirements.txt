@@ -1,8 +1,10 @@
-dotenv==0.9.9
+python-dotenv
 keras==3.14.0
-numpy [required: >=2.1.0, installed: 2.4.4]
-pip==26.0.1
+numpy>=2.1.0
 requests==2.33.1
 scikit-learn==1.8.0
 seaborn==0.13.2
 torch==2.11.0
+pandas
+scipy
+matplotlib

@@ -2,6 +2,7 @@
 data/beatmaps/
 __pycache__/
 kiai/
+.kiai/
 todo
 past_attempts/
 results/

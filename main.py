@@ -1,4 +1,5 @@
 from src.user import run_predict, run_retrain, run_train, get_dataset, run_stat_eda
+from utils.embellish import * 
 
 from pathlib import Path
 import json
@@ -34,14 +35,26 @@ COLLECTIONS = {
 
 if __name__ == "__main__":
     
-    print("━" * 70)
-    print(20 * "━" + " kiAI: osu! map classifier: " + 20 * "━")
-    print("  [1] train       — fetch collections, build dataset, train model")
-    print("  [2] retrain     — retrain using existing dataset")
-    print("  [3] dataset     — repeat the dataset-building step")
-    print("  [4] predict     — predict map type from .osu file(s)")
-    print("  [5] stats       — take a look at EDAs and statistical analysis")
-    print("  [q] quit")
+    S = "#ad97bd"
+    O = "#979797"
+    B = "#ffffff"
+
+    bar = colorPrint(sep(50), S)
+
+    title = colorPrint(sepComment(20, " kiAI: osu! map classifier: "), S)
+    #title = colorPrint(20 * "━" + " kiAI: osu! map classifier: " + 20 * "━", S)
+
+    opts = "\n".join([
+        f"  [1] {stylePrint('train', O, bold=True)}       — fetch collections, build dataset, train model",
+        f"  [2] {stylePrint('retrain', O, bold=True)}     — retrain using existing dataset",
+        f"  [3] {stylePrint('dataset', O, bold=True)}     — repeat the dataset-building step",
+        f"  [4] {stylePrint('predict', O, bold=True)}     — predict map type from .osu file(s)",
+        f"  [5] {stylePrint('stats', O, bold=True)}       — take a look at EDAs and statistical analysis",
+        f"  [q] {stylePrint('quit', O, bold=True)}",
+    ])
+
+    menu = f"\n{bar}\n{title}\n{bar}\n{opts}\n"
+    print(menu)
         
     choice = input("\n> ").strip().lower()
     
@@ -72,7 +85,7 @@ if __name__ == "__main__":
         run_stat_eda("aug")
 
     elif choice in ("q", "quit"):
-        print("bye!")
+        print("\n Returning 0 :(... bye!")
         exit()
 
     else:

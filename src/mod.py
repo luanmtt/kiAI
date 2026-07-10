@@ -100,6 +100,11 @@ def to_dt(row, new_row):
     new_row["od"]               = perceived_od_dt(row["od"])
     new_row["ar_od_ratio"]      = round(new_row["ar"] / new_row["od"], 4) if new_row["od"] else 0.0
 
+    # speed_index = base_bpm * stream_density.
+    # stream_density é invariante sob escala temporal uniforme (DT), então não muda.
+    # Mas base_bpm aumentou, logo speed_index deve ser recalculado.
+    new_row["speed_index"]      = round(new_row["base_bpm"] * new_row.get("stream_density", 0), 2)
+
     return new_row
     
 

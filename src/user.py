@@ -1,4 +1,5 @@
-from src.stat import stats_analysis, apply_mods, plot_edas, reliability_check
+from src.stat import stats_analysis, apply_mods
+from src.eda import plot_edas, reliability_check, correlation_map, plot_label_counts
 from src.fetch import get_ids_from_collector, get_beatmaps_bulk
 from src.osu_parser import parse_and_feature
 from src.download import download_osu_files
