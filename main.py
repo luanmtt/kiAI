@@ -1,5 +1,5 @@
 from src.user import run_predict, run_retrain, run_train, get_dataset, run_stat_eda
-from utils.embellish import * 
+from utils.embellish import stylePrint, colorPrint, sep, sepComment
 
 from pathlib import Path
 import json
@@ -36,13 +36,10 @@ COLLECTIONS = {
 if __name__ == "__main__":
     
     S = "#ad97bd"
-    O = "#979797"
-    B = "#ffffff"
+    O = "#c8b3c4"
 
-    bar = colorPrint(sep(50), S)
-
+    bar   = colorPrint(sep(50), S)
     title = colorPrint(sepComment(20, " kiAI: osu! map classifier: "), S)
-    #title = colorPrint(20 * "━" + " kiAI: osu! map classifier: " + 20 * "━", S)
 
     opts = "\n".join([
         f"  [1] {stylePrint('train', O, bold=True)}       — fetch collections, build dataset, train model",
@@ -56,7 +53,8 @@ if __name__ == "__main__":
     menu = f"\n{bar}\n{title}\n{bar}\n{opts}\n"
     print(menu)
         
-    choice = input("\n> ").strip().lower()
+    choice = input("\n  > ").strip().lower()
+    print()
     
     data_dir = "data"
     
@@ -85,11 +83,11 @@ if __name__ == "__main__":
         run_stat_eda("aug")
 
     elif choice in ("q", "quit"):
-        print("\n Returning 0 :(... bye!")
+        print("  bye!")
         exit()
 
     else:
-        print("Invalid choice.")
+        print("  Invalid choice.")
 
     
 # --------------------------------------------------------------------------------------------------
