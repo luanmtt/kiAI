@@ -1,6 +1,3 @@
-import os
-os.environ["KERAS_BACKEND"] = "torch"
-
 from src.stat import build_expectations, are_mods_needed, MOD_FEATURES
 from src.osu_parser import parse_and_feature
 from src.mod import to_dt, to_hr
@@ -9,7 +6,6 @@ from pathlib import Path
 import pandas as pd
 import numpy as np
 import pickle
-import keras
 
 
 MODEL_DIR = Path("data/processed")
@@ -45,18 +41,23 @@ FEATURES  = [
 # --------------------------------------------------------------------------------------------------
 
 
-def load_artifacts():
-    model = keras.models.load_model(MODEL_DIR / "model.keras")
-    scaler = pickle.load(open(MODEL_DIR / "scaler.pkl", "rb"))
-    le     = pickle.load(open(MODEL_DIR / "label_encoder.pkl", "rb"))
+def load_artifacts(run_dir: Path | None = None):
+    import os
+    os.environ["KERAS_BACKEND"] = "torch"
+    import keras
+
+    model_dir = run_dir if run_dir else MODEL_DIR
+    model = keras.models.load_model(model_dir / "model.keras")
+    scaler = pickle.load(open(model_dir / "scaler.pkl", "rb"))
+    le     = pickle.load(open(model_dir / "le.pkl", "rb"))
     return model, scaler, le
 
 
 # --------------------------------------------------------------------------------------------------
 
 
-def predict_maps(osu_paths: list[str]):
-    model, scaler, le = load_artifacts()
+def predict_maps(osu_paths: list[str], run_dir: Path | None = None):
+    model, scaler, le = load_artifacts(run_dir=run_dir)
     stats_df     = pd.read_csv("data/analysis/label_feature_stats.csv")
     expectations = build_expectations(stats_df, MOD_FEATURES["dt"] + MOD_FEATURES["hr"])
 

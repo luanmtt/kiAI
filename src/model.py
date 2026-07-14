@@ -1,16 +1,7 @@
-import os
-os.environ["KERAS_BACKEND"] = "torch"
-
 import numpy as np
 import pandas as pd
 import pickle
-import keras
- 
-from sklearn.preprocessing import LabelEncoder, StandardScaler
-from sklearn.utils.class_weight import compute_class_weight
-from sklearn.model_selection import train_test_split, StratifiedKFold
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.metrics import classification_report
+from pathlib import Path
 
 
 '''
@@ -63,7 +54,7 @@ FEATURES  = [
 ]
 
 
-def train(model_choice:str = "keras"):
+def train(model_choice:str = "keras", run_dir: Path | None = None):
     
     '''
         
@@ -76,9 +67,20 @@ def train(model_choice:str = "keras"):
 
     '''
     
+    import os
+    os.environ["KERAS_BACKEND"] = "torch"
+    import keras
+    from sklearn.preprocessing import LabelEncoder, StandardScaler
+    from sklearn.utils.class_weight import compute_class_weight
+    from sklearn.model_selection import train_test_split, StratifiedKFold
+    from sklearn.ensemble import RandomForestClassifier
+    from sklearn.metrics import classification_report
+
+    data_dir = run_dir if run_dir else Path("data/processed")
+
     print("Starting training: \n") 
 
-    df = pd.read_csv("data/processed/augmented.csv")
+    df = pd.read_csv(data_dir / "augmented.csv")
     df = df.dropna(subset=FEATURES + ["label"])
     
 
@@ -299,11 +301,11 @@ def train(model_choice:str = "keras"):
                 Salvando: modelo, scaler das labels e o LabelEncoder, também das labels.
             '''
 
-            model.save("models/model.keras")
-            pickle.dump(scaler, open("data/processed/scaler.pkl", "wb"))
-            pickle.dump(le, open("data/processed/le.pkl", "wb"))
+            model.save(data_dir / "model.keras")
+            pickle.dump(scaler, open(data_dir / "scaler.pkl", "wb"))
+            pickle.dump(le, open(data_dir / "le.pkl", "wb"))
 
-            print("Saved model, scaler and LE.")
+            print(f"Saved model, scaler and LE → {data_dir}")
             
         
         case "forest":

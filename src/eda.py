@@ -1,5 +1,6 @@
 import matplotlib.pyplot as plt
 from scipy import stats
+from pathlib import Path
 import seaborn as sns
 import pandas as pd
 import numpy as np
@@ -12,7 +13,10 @@ import numpy as np
 FEATURES = ["ar", "cs", "od", "star_rating", "base_bpm"]
 
 
-def plot_edas(df: pd.DataFrame, stats_df: pd.DataFrame):
+def plot_edas(df: pd.DataFrame, stats_df: pd.DataFrame, run_dir=None):
+
+    out = Path(run_dir) if run_dir else Path("eda")
+    out.mkdir(parents=True, exist_ok=True)
 
     for feat in FEATURES:
 
@@ -63,7 +67,7 @@ def plot_edas(df: pd.DataFrame, stats_df: pd.DataFrame):
             ax.set_visible(False)
 
         plt.tight_layout()
-        plt.savefig(f"results/eda/dist_{feat}.png", dpi=120)
+        plt.savefig(out / f"dist_{feat}.png", dpi=120)
         plt.close()
 
         print(f"Saved dist_{feat}.png")
@@ -77,7 +81,7 @@ def plot_edas(df: pd.DataFrame, stats_df: pd.DataFrame):
     sns.heatmap(p_pivot, annot=True, fmt=".3f", cmap="RdYlGn", vmin=0, vmax=0.1)
     plt.title("Shapiro-Wilk p-value per label × feature\ngreen > 0.05 = normal | red = non-normal distribution")
     plt.tight_layout()
-    plt.savefig("results/eda/normality_heatmap.png", dpi=120)
+    plt.savefig(out / "normality_heatmap.png", dpi=120)
     plt.close()
 
     print("Saved normality_heatmap.png")
@@ -87,7 +91,7 @@ def plot_edas(df: pd.DataFrame, stats_df: pd.DataFrame):
 # confiabilidade das classes:
 
 
-def reliability_check(df: pd.DataFrame, subjects: list[str], classes: list[str]):
+def reliability_check(df: pd.DataFrame, subjects: list[str], classes: list[str], run_dir=None):
     '''
     '''
     mask = df["label"].isin(subjects)
@@ -95,23 +99,29 @@ def reliability_check(df: pd.DataFrame, subjects: list[str], classes: list[str])
     subset = subset.groupby("label").describe().T
     subset = subset.drop(["min", "max", "25%", "50%", "75%"], level=1)
 
+    out = Path(run_dir) if run_dir else Path("eda")
+    out.mkdir(parents=True, exist_ok=True)
     subset = subset.round(2)
-    subset.to_csv("results/eda/analysis.csv", index=True)
+    subset.to_csv(out / "analysis.csv", index=True)
     
-    print("Analysis of class reliability saved on results/eda/analysis.csv")
+    print(f"Analysis of class reliability saved → {out / 'analysis.csv'}")
     
 
 # --------------------------------------------------------------------------------------------------
 # mapa de correlação de pearson:
 
 
-def correlation_map(df: pd.DataFrame, features: list[str], output: str = "results/eda/correlation.png"):
+def correlation_map(df: pd.DataFrame, features: list[str], run_dir=None):
     '''
         Gera um heatmap de correlação de Pearson entre as features selecionadas.
         Valores próximos de +1 indicam correlação positiva forte,
         -1 correlação negativa forte, e 0 ausência de correlação linear.
     '''
     
+    out = Path(run_dir) if run_dir else Path("eda")
+    out.mkdir(parents=True, exist_ok=True)
+    output = out / "correlation.png"
+
     subset = df[features].dropna()
     corr = subset.corr(method="pearson")
 
@@ -141,11 +151,15 @@ def correlation_map(df: pd.DataFrame, features: list[str], output: str = "result
 # gráfico de barras horizontal — quantidade de mapas por label:
 
 
-def plot_label_counts(df: pd.DataFrame, output: str = "results/eda/label_counts.png"):
+def plot_label_counts(df: pd.DataFrame, run_dir=None):
     '''
         Plota um gráfico de barras horizontal mostrando quantos mapas existem
         por label, ordenado do maior para o menor.
     '''
+
+    out = Path(run_dir) if run_dir else Path("eda")
+    out.mkdir(parents=True, exist_ok=True)
+    output = out / "label_counts.png"
 
     counts = df["label"].value_counts().sort_values(ascending=True)
 

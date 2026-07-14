@@ -1,6 +1,7 @@
 from src.mod import to_dt, to_hr
 
 from scipy import stats
+from pathlib import Path
 import pandas as pd
 
 
@@ -16,7 +17,7 @@ MOD_FEATURES =  {   "dt": ["base_bpm", "notes_per_second", "mean_interval_ms"], 
                 }
    
 
-def stats_analysis(df: pd.DataFrame) -> pd.DataFrame:
+def stats_analysis(df: pd.DataFrame, run_dir=None) -> pd.DataFrame:
     '''
         
         • Aqui, vamos analisar estatisticamente as features base seguintes:
@@ -78,9 +79,11 @@ def stats_analysis(df: pd.DataFrame) -> pd.DataFrame:
             })
     
     stats_df = pd.DataFrame(statistics)
-    stats_df.to_csv("results/eda/eda_stats.csv", index=False)
+    out = Path(run_dir) if run_dir else Path("eda")
+    out.mkdir(parents=True, exist_ok=True)
+    stats_df.to_csv(out / "eda_stats.csv", index=False)
     
-    print("\nSaved statistics.")
+    print(f"\nSaved statistics → {out / 'eda_stats.csv'}")
     #print(stats_df.to_string())
 
 
