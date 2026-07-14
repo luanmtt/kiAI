@@ -9,7 +9,7 @@ import pandas as pd
 # label stat analysis:
 
 
-features = ["ar", "cs", "od", "star_rating", "base_bpm"]
+features = ["ar", "cs", "od", "star_rating", "base_bpm", "notes_per_second", "mean_interval_ms"]
 
 MOD_FEATURES =  {   "dt": ["base_bpm", "notes_per_second", "mean_interval_ms"], # DT raises these
                     "hr": ["ar", "cs", "od"],                                   # HR raises these
