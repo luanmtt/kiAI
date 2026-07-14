@@ -19,11 +19,14 @@ GENRE = {
 # build dataset with both .osu and api-retrieved data.
 
 
-def build_dataset(data_dir:str = "data") -> pd.DataFrame:
+def build_dataset(data_dir:str = "data", run_dir: Path | None = None, label_type: str | None = None) -> pd.DataFrame:
     
     raw_dir = Path(data_dir) / "raw"
+    if label_type:
+        raw_dir = raw_dir / label_type
+
     beatmap_dir = Path(data_dir) / "beatmaps"
-    out_dir = Path(data_dir) / "processed"
+    out_dir = run_dir if run_dir else Path(data_dir) / "processed"
     out_dir.mkdir(parents=True, exist_ok=True)
 
     
@@ -32,7 +35,7 @@ def build_dataset(data_dir:str = "data") -> pd.DataFrame:
 
     json_files = list(raw_dir.glob("*.json"))
     if not json_files:
-        print("No JSON files found in data/raw/")
+        print(f"No JSON files found in {raw_dir}/")
         return pd.DataFrame()
    
 
@@ -44,7 +47,7 @@ def build_dataset(data_dir:str = "data") -> pd.DataFrame:
         
 
     for json_file in json_files:
-        category = json_file.stem
+        category = json_file.stem.removesuffix("_maps")
         with open(json_file) as f:
             beatmaps = json.load(f)
 

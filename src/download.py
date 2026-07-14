@@ -43,10 +43,14 @@ def check_disk_space(osu_dir: Path, i: int, total: int):
 # download:
 
 
-def download_osu_files(data_dir: str = "data"):
+def download_osu_files(data_dir: str = "data", label_type: str | None = None):
     
+    raw_dir = Path(data_dir) / "raw"
+    if label_type:
+        raw_dir = raw_dir / label_type
+
     all_ids = []
-    for json_file in Path("data/raw").glob("*.json"):
+    for json_file in raw_dir.glob("*.json"):
         with open(json_file) as f:
             beatmaps = json.load(f)
         all_ids += [b["id"] for b in beatmaps]
@@ -57,14 +61,13 @@ def download_osu_files(data_dir: str = "data"):
     print(f"duplicates    : {len(all_ids) - len(set(all_ids))}")
     
 
-    raw_dir  = Path(data_dir) / "raw"
     osu_dir  = Path(data_dir) / "beatmaps"
     osu_dir.mkdir(parents=True, exist_ok=True)
 
 
     json_files = list(raw_dir.glob("*.json"))
     if not json_files:
-        print("No JSON files found in data/raw/")
+        print(f"No JSON files found in {raw_dir}/")
         return
 
 
