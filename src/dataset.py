@@ -1,4 +1,5 @@
 from src.osu_parser import parse_and_feature
+from utils.embellish import stylePrint
 
 from pathlib import Path
 import pandas as pd
@@ -14,6 +15,7 @@ GENRE = {
     12: "classical", 13: "folk", 14: "jazz"
 }
 
+O = "#c8b3c4"
 
 # --------------------------------------------------------------------------------------------------
 # build dataset with both .osu and api-retrieved data.
@@ -37,21 +39,21 @@ def build_dataset(data_dir:str = "data", run_dir: Path | None = None, label_type
     if not json_files:
         print(f"No JSON files found in {raw_dir}/")
         return pd.DataFrame()
-   
+
+    max_category_len = max(len(f.stem.removesuffix("_maps")) for f in json_files)
 
     rows = []
     skipped_api  = 0
     skipped_osu  = 0
     parse_errors = 0
     seen_ids     = set()
-        
 
     for json_file in json_files:
         category = json_file.stem.removesuffix("_maps")
         with open(json_file) as f:
             beatmaps = json.load(f)
 
-        print(f"Processing '{category}'...     → ({len(beatmaps)} maps)")
+        print(f"    → Processing {category:>{max_category_len}}... -> ({len(beatmaps)} maps)")
 
         for b in beatmaps:
             beatmap_id = b["id"]
@@ -195,12 +197,12 @@ def build_dataset(data_dir:str = "data", run_dir: Path | None = None, label_type
     out_path = out_dir / "dataset.csv"
     df.to_csv(out_path, index=False)
 
-    print(f"\nDataset built:")
-    print(f"  Total rows     : {len(df)}")
-    print(f"  Skipped (dupe) : {skipped_api}")
-    print(f"  Missing .osu   : {skipped_osu}")
-    print(f"  Parse errors   : {parse_errors}")
-    print(f"  Saved to       : {out_path}")
+    print(f"\n  • Dataset {stylePrint("built", O, bold=True)}:")
+    print(f"    ◦ Total rows     : {len(df)}")
+    print(f"    ◦ Skipped (dupe) : {skipped_api}")
+    print(f"    ◦ Missing .osu   : {skipped_osu}")
+    print(f"    ◦ Parse errors   : {parse_errors}")
+    print(f"    ◦ Saved to       : {out_path}")
     #print(f"\nLabel distribution:")
     #print(df["label"].value_counts().to_string())
 

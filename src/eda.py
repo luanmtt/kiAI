@@ -70,7 +70,7 @@ def plot_edas(df: pd.DataFrame, stats_df: pd.DataFrame, run_dir=None):
         plt.savefig(out / f"dist_{feat}.png", dpi=120)
         plt.close()
 
-        print(f"Saved dist_{feat}.png")
+        print(f"    ◦ Saved dist_{feat}.png")
         
         
     # --------------------------------------------------------------------------------------------------
@@ -84,7 +84,7 @@ def plot_edas(df: pd.DataFrame, stats_df: pd.DataFrame, run_dir=None):
     plt.savefig(out / "normality_heatmap.png", dpi=120)
     plt.close()
 
-    print("Saved normality_heatmap.png")
+    print("    ◦ Saved normality_heatmap.png")
        
 
 # --------------------------------------------------------------------------------------------------
@@ -104,7 +104,7 @@ def reliability_check(df: pd.DataFrame, subjects: list[str], classes: list[str],
     subset = subset.round(2)
     subset.to_csv(out / "analysis.csv", index=True)
     
-    print(f"Analysis of class reliability saved → {out / 'analysis.csv'}")
+    print(f"    ◦ Saved analysis of class reliability")
     
 
 # --------------------------------------------------------------------------------------------------
@@ -144,7 +144,7 @@ def correlation_map(df: pd.DataFrame, features: list[str], run_dir=None):
     plt.savefig(output, dpi=120)
     plt.close()
 
-    print(f"Saved correlation map → {output}")
+    print(f"    ◦ Saved correlation map → {output}")
 
 
 # --------------------------------------------------------------------------------------------------
@@ -177,7 +177,7 @@ def plot_label_counts(df: pd.DataFrame, run_dir=None):
     plt.savefig(output, dpi=120)
     plt.close()
 
-    print(f"Saved label counts → {output}")
+    print(f"    ◦ Saved label counts → {output}")
 
 
 # --------------------------------------------------------------------------------------------------
