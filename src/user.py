@@ -15,21 +15,22 @@ from datetime import datetime
 import pandas as pd
 import json
 import os
+import shutil
 
 
 # --------------------------------------------------------------------------------------------------
 # cores do CLI:
 
 
-S = "#ad97bd"
 O = "#c8b3c4"
+CORAL = "#C95D63"
 
 
 def div(text: str = "") -> str:
     """Header de seção com 50 chars de largura."""
     if text:
-        return colorPrint(sepComment(20, f" {text} "), S)
-    return colorPrint(sep(50), S)
+        return colorPrint(sepComment(20, f" {text} "), O)
+    return colorPrint(sep(50), O)
 
 
 # --------------------------------------------------------------------------------------------------
@@ -81,11 +82,12 @@ TEMPLATES = {
 
 def ask_label_type() -> str | None:
     """Pergunta ao usuário se quer treinar para 'type' ou 'tourney'."""
-    print("  Which label branch?")
-    print(f"    {stylePrint('type', O, bold=True)}     — map classification (stream, dt_farm, tech...)")
-    print(f"    {stylePrint('tourney', O, bold=True)}  — tournament slots (nm_1, hr_1, dt_2...)")
+    
+    print(      stylePrint("  • Which label branch?\n", O, bold = True))
+    print(f"  {stylePrint('type', O, bold=True)}     — map classification (stream, dt_farm, tech...)")
+    print(f"  {stylePrint('tourney', O, bold=True)}  — tournament slots (nm_1, hr_1, dt_2...)")
 
-    choice = input("\n    > ").strip().lower()
+    choice = input("\n  > ").strip().lower()
     print()
     if choice in ("type", "tourney"):
         return choice
@@ -100,7 +102,31 @@ def make_run_dir(label_type: str) -> Path:
     ts = f"{now.day:02d}-{now.month:02d}_{now.hour:02d}h{now.minute:02d}"
     run_dir = Path("outputs") / f"{label_type}_{ts}"
     run_dir.mkdir(parents=True, exist_ok=True)
+    increment_usage(run_dir)
     return run_dir
+
+
+def _usage_path(run_dir: Path) -> Path:
+    return run_dir / ".usage"
+
+
+def _read_usage(run_dir: Path) -> int:
+    usage_file = _usage_path(run_dir)
+    if not usage_file.exists():
+        return 0
+    try:
+        return max(0, int(usage_file.read_text().strip()))
+    except ValueError:
+        return 0
+
+
+def _write_usage(run_dir: Path, count: int) -> None:
+    _usage_path(run_dir).write_text(str(count))
+
+
+def increment_usage(run_dir: Path) -> None:
+    """Incrementa o contador de acessos do diretório de saída."""
+    _write_usage(run_dir, _read_usage(run_dir) + 1)
 
 
 # --------------------------------------------------------------------------------------------------
@@ -145,21 +171,25 @@ def check_collections_input(label_type: str) -> dict:
 
 
 def get_dataset():
-
-    print(div("Build dataset"))
+    
+    div = colorPrint( sepComment(20, "Build dataset"), O) 
+    print(div)
 
     label_type = ask_label_type()
     if not label_type:
         return
 
+    title = stylePrint("  • Beginning dataset construction..", O,  bold=True)
+    print(title)
+
     run_dir = make_run_dir(label_type)
-    print(f"\n  Output → {run_dir}\n")
+    print(f"    ◦ Output → {run_dir}\n")
 
     build_dataset(run_dir=run_dir, label_type=label_type)
 
     # stat analysis + mod augmentation
     df       = pd.read_csv(run_dir / "dataset.csv")
-    stats_df = stats_analysis(df, run_dir=run_dir)
+    stats_df = stats_analysis(df, run_dir=run_dir, save=False)
     df_aug   = apply_mods(df, stats_df)
     df_aug.to_csv(run_dir / "augmented.csv", index=False)
 
@@ -245,9 +275,9 @@ def run_retrain():
         print(f"  No {label_type} runs found in outputs/. Run 'train' first.")
         return
 
-    print(f"  Available {label_type} runs:")
+    print(f"  Available " + stylePrint(label_type, O,bold=True) + " runs:")
     for i, r in enumerate(runs):
-        print(f"    [{i}] {r.name}")
+        print(f"    {stylePrint(str(i), O, bold=True)}{r.name}")
 
     idx = input("\n  Select run number: ").strip()
     if not idx.isdigit() or int(idx) >= len(runs):
@@ -255,6 +285,8 @@ def run_retrain():
         return
 
     run_dir = runs[int(idx)]
+    increment_usage(run_dir)
+
     aug  = run_dir / "augmented.csv"
     base = run_dir / "dataset.csv"
 
@@ -293,9 +325,9 @@ def run_predict():
         print(f"  No {label_type} runs found. Run 'train' first.")
         return
 
-    print(f"  Available {label_type} runs:")
+    print(f"  Available " + stylePrint(label_type, O, bold=True) + " runs:")
     for i, r in enumerate(runs):
-        print(f"    [{i}] {r.name}")
+        print(f"    {stylePrint(str(i), O, bold=True)}{r.name}")
 
     idx = input("\n  Select run number: ").strip()
     if not idx.isdigit() or int(idx) >= len(runs):
@@ -303,6 +335,7 @@ def run_predict():
         return
 
     run_dir = runs[int(idx)]
+    increment_usage(run_dir)
 
     required  = ["model.keras", "scaler.pkl", "le.pkl"]
     missing   = [f for f in required if not (run_dir / f).exists()]
@@ -350,9 +383,9 @@ def run_stat_eda(csv: str):
         print(f"  No {label_type} runs found. Run 'train' first.")
         return
 
-    print(f"  Available {label_type} runs:")
+    print(f"  Available " + stylePrint(label_type, O, bold=True) + " runs:")
     for i, r in enumerate(runs):
-        print(f"    [{i}] {r.name}")
+        print(f"    ◦ {stylePrint("[" + str(i)+ "]: ", O, bold=True)}{r.name}")
 
     idx = input("\n  Select run number: ").strip()
     if not idx.isdigit() or int(idx) >= len(runs):
@@ -360,6 +393,7 @@ def run_stat_eda(csv: str):
         return
 
     run_dir = runs[int(idx)]
+    increment_usage(run_dir)
 
     if csv == "aug":
         df = pd.read_csv(run_dir / "dataset.csv")
@@ -387,6 +421,63 @@ def run_stat_eda(csv: str):
     ]
 
     reliability_check(df, SUBSET, CLASSES, run_dir=run_dir)
+
+
+# --------------------------------------------------------------------------------------------------
+
+
+def run_cleanup():
+    """Lista e permite deletar diretórios de saída, mostrando quantas vezes foram usados."""
+
+    print(div("Delete outputs"))
+
+    outputs_dir = Path("outputs")
+    if not outputs_dir.exists():
+        print("  No outputs directory found.")
+        return
+
+    runs = sorted([d for d in outputs_dir.iterdir() if d.is_dir()])
+    if not runs:
+        print("  No output directories found.")
+        return
+
+    print(f"  • What directories do you want to {stylePrint('delete', CORAL, bold=True)}?\n")
+    for i, r in enumerate(runs):
+        usage = _read_usage(r)
+        times_word = "time" if usage == 1 else "times"
+        print(f"  {stylePrint('[' + str(i) + ']', O, bold=True)} {r.name} ({usage} {times_word} used)")
+
+    raw = input("\n  > ").strip()
+    if not raw:
+        print("  No selection made.")
+        return
+
+    try:
+        indices = [int(x.strip()) for x in raw.split(",")]
+    except ValueError:
+        print("  Invalid input.")
+        return
+
+    if any(idx < 0 or idx >= len(runs) for idx in indices):
+        print("  Invalid selection.")
+        return
+
+    selected = [runs[i] for i in indices]
+
+    print("\n  • Are you sure? [y/n]\n")
+    confirm = input("  > ").strip().lower()
+    print("\n")
+
+    if confirm != "y":
+        print("  Cancelled.")
+        return
+
+    for r in selected:
+        shutil.rmtree(r)
+        print("  ◦ Deleted:")
+        print(f"    → {r.name}")
+
+    print(f"\n  {stylePrint('Done', O, bold=True)}")
 
 
 # ──────────────────────────────────────────────────────────────────────────────────────────────────

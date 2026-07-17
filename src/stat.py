@@ -1,5 +1,7 @@
 from src.mod import to_dt, to_hr
 
+from utils.embellish import stylePrint
+
 from scipy import stats
 from pathlib import Path
 import pandas as pd
@@ -17,7 +19,10 @@ MOD_FEATURES =  {   "dt": ["base_bpm", "notes_per_second", "mean_interval_ms"], 
                 }
    
 
-def stats_analysis(df: pd.DataFrame, run_dir=None) -> pd.DataFrame:
+O = "#c8b3c4"
+
+
+def stats_analysis(df: pd.DataFrame, run_dir=None, save: bool = True) -> pd.DataFrame:
     '''
         
         • Aqui, vamos analisar estatisticamente as features base seguintes:
@@ -79,12 +84,15 @@ def stats_analysis(df: pd.DataFrame, run_dir=None) -> pd.DataFrame:
             })
     
     stats_df = pd.DataFrame(statistics)
-    out = Path(run_dir) if run_dir else Path("eda")
-    out.mkdir(parents=True, exist_ok=True)
-    stats_df.to_csv(out / "eda_stats.csv", index=False)
-    
-    print(f"\nSaved statistics → {out / 'eda_stats.csv'}")
-    #print(stats_df.to_string())
+
+    if save:
+        out = Path(run_dir) if run_dir else Path("eda")
+        out.mkdir(parents=True, exist_ok=True)
+        stats_df.to_csv(out / "eda_stats.csv", index=False)
+
+        print(stylePrint("  • Saving data", O, bold=True) + f" on {out / 'eda_stats.csv'}")
+        print("    ◦ Saved statistics")
+        #print(stats_df.to_string())
 
 
     return stats_df
@@ -251,10 +259,10 @@ def apply_mods(df: pd.DataFrame, stats_df: pd.DataFrame) -> pd.DataFrame:
     augmented_df = pd.concat([df, pd.DataFrame(augmented_rows)], ignore_index=True)
     #augmented_df.to_csv("data/processed/augmented.csv", index=False)
     
-    print("Dataset updated:")
-    print(f"  Original rows     : {len(df)}")
-    print(f"  Augmented rows    : {len(augmented_rows)}")
-    print(f"  New total         : {len(augmented_df)}")
+    print(f"\n  • Dataset {stylePrint("updated", O, bold=True)}:")
+    print(f"    ◦ Original rows     : {len(df)}")
+    print(f"    ◦ Augmented rows    : {len(augmented_rows)}")
+    print(f"    ◦ New total         : {len(augmented_df)}")
 
     return augmented_df
 
