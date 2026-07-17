@@ -1,5 +1,7 @@
 from pathlib import Path
+from concurrent.futures import ThreadPoolExecutor, as_completed
 import requests
+import threading
 import shutil
 import time
 import json
@@ -11,6 +13,9 @@ import os
 
 BASE_URL = "https://osu.ppy.sh/api/v2"
 OSU_FILE_URL = "https://osu.ppy.sh/osu"
+
+MAX_WORKERS = 10
+DELAY = 0.12  # 0.3 / 2.5
 
 GENRE = {
     0: "any", 1: "unspecified", 2: "video_game", 3: "anime",
@@ -41,6 +46,37 @@ def check_disk_space(osu_dir: Path, i: int, total: int):
 
 # --------------------------------------------------------------------------------------------------
 # download:
+
+
+def _download_one(beatmap_id: int, out_path: Path, sem: threading.Semaphore, lock: threading.Lock,
+                  stats: dict) -> tuple[int, bool, str]:
+    """Baixa um único .osu file. Retorna (beatmap_id, success, error_msg)."""
+    if out_path.exists() and out_path.stat().st_size > 0:
+        with lock:
+            stats["skipped"] += 1
+        return beatmap_id, True, "skip"
+
+    sem.acquire()
+    try:
+        r = requests.get(f"{OSU_FILE_URL}/{beatmap_id}", timeout=10)
+        r.raise_for_status()
+
+        with open(out_path, "w", encoding="utf-8") as f:
+            f.write(r.text)
+
+        time.sleep(DELAY)
+
+        with lock:
+            stats["downloaded"] += 1
+        return beatmap_id, True, "ok"
+
+    except requests.exceptions.RequestException as e:
+        with lock:
+            stats["failed"] += 1
+        return beatmap_id, False, str(e)
+
+    finally:
+        sem.release()
 
 
 def download_osu_files(data_dir: str = "data", label_type: str | None = None):
@@ -84,52 +120,46 @@ def download_osu_files(data_dir: str = "data", label_type: str | None = None):
             all_maps.append((category, b))
 
 
-    total      = len(all_maps)
-    skipped    = 0
-    downloaded = 0
-    failed     = 0
+    total = len(all_maps)
+
+    # filter out non-standard modes
+    maps_to_download = [
+        (cat, b) for cat, b in all_maps
+        if b.get("mode") not in ["mania", "taiko", "fruits"]
+    ]
 
     print(f"Found {total} maps across {len(json_files)} categories")
-    print(f"Saving .osu files to {osu_dir}/\n")
+    print(f"Saving .osu files to {osu_dir}/")
+    print(f"Downloading with {MAX_WORKERS} workers, {DELAY}s delay\n")
 
-    for i, (category, b) in enumerate(all_maps, 1):
-        beatmap_id = b["id"]
-        out_path   = osu_dir / f"{beatmap_id}.osu"
+    sem = threading.Semaphore(MAX_WORKERS)
+    lock = threading.Lock()
+    stats = {"downloaded": 0, "skipped": 0, "failed": 0}
 
-        if b["mode"] in ["mania", "taiko", "fruits"]:
-            continue
+    with ThreadPoolExecutor(max_workers=MAX_WORKERS) as pool:
+        futures = {}
+        for i, (category, b) in enumerate(maps_to_download):
+            beatmap_id = b["id"]
+            out_path   = osu_dir / f"{beatmap_id}.osu"
+            fut = pool.submit(_download_one, beatmap_id, out_path, sem, lock, stats)
+            futures[fut] = (i, category, b)
 
-        # skip if already downloaded (safe to re-run)
-        if out_path.exists() and out_path.stat().st_size > 0:
-            skipped += 1
-            if skipped % 50 == 0:
-                print(f"  [{i}/{total}] skipped {skipped} already-downloaded files...")
-            continue
+        for fut in as_completed(futures):
+            i, category, b = futures[fut]
+            beatmap_id, success, msg = fut.result()
 
-        try:
-            r = requests.get(f"{OSU_FILE_URL}/{beatmap_id}", timeout=10)
-            r.raise_for_status()
+            with lock:
+                done = stats["downloaded"] + stats["skipped"] + stats["failed"]
 
-            with open(out_path, "w", encoding="utf-8") as f:
-                f.write(r.text)
+            if done % 50 == 0 and done > 0:
+                print(f"  [{done}/{len(maps_to_download)}] "
+                      f"dl={stats['downloaded']} skip={stats['skipped']} fail={stats['failed']}")
 
-            downloaded += 1
+            if not success and msg != "skip":
+                print(f"  FAILED {beatmap_id}: {msg}")
 
-            # progress print every 25 downloads
-            if downloaded % 25 == 0:
-                genre_name = GENRE.get(b.get("beatmapset", {}).get("genre_id"), "unknown")
-                print(f"  [{i}/{total}] downloaded {downloaded} so far | "
-                      f"last: {beatmap_id} ({category}, {genre_name})")
-
-            time.sleep(0.3)  # polite delay — osu! will rate limit you without this
-            
-            if downloaded % 100 == 0: 
-                check_disk_space(osu_dir, i, total)
-
-        except requests.exceptions.RequestException as e:
-            failed += 1
-            print(f"  [{i}/{total}] FAILED {beatmap_id}: {e}")
-            time.sleep(1)
+            if done % 100 == 0 and done > 0:
+                check_disk_space(osu_dir, done, len(maps_to_download))
 
 
 # --------------------------------------------------------------------------------------------------
@@ -137,10 +167,10 @@ def download_osu_files(data_dir: str = "data", label_type: str | None = None):
 
 
     print(f"\nDone!")
-    print(f"  downloaded : {downloaded}")
-    print(f"  skipped    : {skipped} (already existed)")
-    print(f"  failed     : {failed}")
-    print(f"  total      : {total}")
+    print(f"  downloaded : {stats['downloaded']}")
+    print(f"  skipped    : {stats['skipped']} (already existed)")
+    print(f"  failed     : {stats['failed']}")
+    print(f"  total      : {len(maps_to_download)}")
 
 
 # --------------------------------------------------------------------------------------------------
