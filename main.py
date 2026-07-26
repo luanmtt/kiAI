@@ -58,11 +58,14 @@ if __name__ == "__main__":
 
     raw_dir = Path(data_dir) / "raw"
     beatmap_dir = Path(data_dir) / "beatmaps"
-    out_dir = Path(data_dir) / "processed"
 
-    out_dir.mkdir(parents=True, exist_ok=True)
     raw_dir.mkdir(parents=True, exist_ok=True)
+    raw_dir.joinpath("type").mkdir(exist_ok=True)
+    raw_dir.joinpath("tourney").mkdir(exist_ok=True)
     beatmap_dir.mkdir(parents=True, exist_ok=True)
+    beatmap_dir.joinpath("type").mkdir(exist_ok=True)
+    beatmap_dir.joinpath("tourney").mkdir(exist_ok=True)
+    Path("outputs").mkdir(exist_ok=True)
 
     while True:
         print(menu)

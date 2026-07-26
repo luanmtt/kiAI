@@ -8,7 +8,7 @@ import numpy as np
 import pickle
 
 
-MODEL_DIR = Path("data/processed")
+MODEL_DIR = Path("outputs")
 FEATURES  = [
     #"bpm", 
     "star_rating",

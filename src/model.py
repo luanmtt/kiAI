@@ -74,9 +74,11 @@ def train(model_choice:str = "keras", run_dir: Path | None = None):
     from sklearn.utils.class_weight import compute_class_weight
     from sklearn.model_selection import train_test_split, StratifiedKFold
     from sklearn.ensemble import RandomForestClassifier
-    from sklearn.metrics import classification_report
+    from sklearn.metrics import classification_report, confusion_matrix
 
-    data_dir = run_dir if run_dir else Path("data/processed")
+    data_dir = run_dir
+    if not data_dir:
+        raise ValueError("run_dir is required for training")
 
     print("Starting training: \n") 
 
@@ -293,6 +295,15 @@ def train(model_choice:str = "keras", run_dir: Path | None = None):
 
             print(classification_report(y_test, y_pred, target_names=le.classes_))
 
+            # saving metrics + confusion matrix
+            report = classification_report(y_test, y_pred, target_names=le.classes_, output_dict=True)
+            pd.DataFrame(report).transpose().to_csv(data_dir / "metrics.csv")
+
+            cm = confusion_matrix(y_test, y_pred)
+            pd.DataFrame(cm, index=le.classes_, columns=le.classes_).to_csv(data_dir / "confusion_matrix.csv")
+
+            print(f"Saved metrics.csv + confusion_matrix.csv → {data_dir}")
+
 
             # --------------------------------------------------------------------------------------------------
             # salvar modelo:
@@ -338,24 +349,40 @@ def train(model_choice:str = "keras", run_dir: Path | None = None):
             )
 
             clf.fit(X_train, y_train)
-            print(classification_report(y_test, clf.predict(X_test), target_names=le.classes_))
-            
-            '''
+
+            y_pred = clf.predict(X_test)
+            print(classification_report(y_test, y_pred, target_names=le.classes_))
+
+            # saving metrics + confusion matrix
+            report = classification_report(y_test, y_pred, target_names=le.classes_, output_dict=True)
+            pd.DataFrame(report).transpose().to_csv(data_dir / "metrics.csv")
+
+            cm = confusion_matrix(y_test, y_pred)
+            pd.DataFrame(cm, index=le.classes_, columns=le.classes_).to_csv(data_dir / "confusion_matrix.csv")
+
+            # saving feature importances
             importances = pd.Series(clf.feature_importances_, index=FEATURES)
-            print(importances.sort_values(ascending=False))
-            '''
+            importances.sort_values(ascending=False).to_csv(data_dir / "feature_importance.csv")
+
+            print(f"Saved metrics.csv + confusion_matrix.csv + feature_importance.csv → {data_dir}")
     
         
         case "cross-fold":
 
             skf = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)
-            
-            loss, acc = skf.evaluate(X_test, y_test, verbose="silent")
-            print(f"Test accuracy: {acc:.4f}")
 
             y_pred = np.argmax(skf.predict(X_test), axis=1)
 
             print(classification_report(y_test, y_pred, target_names=le.classes_))
+
+            # saving metrics + confusion matrix
+            report = classification_report(y_test, y_pred, target_names=le.classes_, output_dict=True)
+            pd.DataFrame(report).transpose().to_csv(data_dir / "metrics.csv")
+
+            cm = confusion_matrix(y_test, y_pred)
+            pd.DataFrame(cm, index=le.classes_, columns=le.classes_).to_csv(data_dir / "confusion_matrix.csv")
+
+            print(f"Saved metrics.csv + confusion_matrix.csv → {data_dir}")
 
 
 

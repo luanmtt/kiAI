@@ -65,8 +65,7 @@ TOURNEY_TEMPLATE = {
     "dt_2":   0,
     "hd_1":   0,
     "hd_2":   0,
-    "fm_1":   0,
-    "fm_2":   0,
+    "fm":     0,
     "tb":     0,
 }
 
@@ -139,15 +138,15 @@ def check_collections_input(label_type: str) -> dict:
     filename = f"collections_{label_type}.json"
     path = Path("data") / filename
 
-    print(f"Searching for '{filename}'...")
+    print(f"  • Searching for {stylePrint(filename,O, bold=True)}...")
 
     if not path.exists():
         with open(path, "w") as f:
             json.dump(template, f, indent=4)
 
-        print(f"No {filename} found.")
-        print(f"Template created at {path}.")
-        print("Fill in the osu!collector collection IDs and rerun.")
+        print(f"    ◦ No {filename} found.")
+        print(f"    ◦ Template created at {path}.")
+        print("     → Fill in the osu!collector collection IDs and rerun.")
         return {}
 
     with open(path) as f:
@@ -156,12 +155,12 @@ def check_collections_input(label_type: str) -> dict:
     # validate keys
     missing = [k for k in template if k not in collections]
     if missing:
-        print(f"{filename} is missing labels: {missing}")
+        print(f"    ◦ {stylePrint(filename, O, bold=True)} is missing labels: {missing}")
         return {}
 
     filled = {k: v for k, v in collections.items() if v != 0}
     if not filled:
-        print(f"{filename} has no collection IDs filled in.")
+        print(f"    ◦  {stylePrint(filename, O, bold=True)} has no collection IDs filled in.")
         return {}
 
     return filled
@@ -210,13 +209,13 @@ def run_train():
         return
 
     run_dir = make_run_dir(label_type)
-    print(f"\n  Output → {run_dir}\n")
+    print(f"    ◦ Output → {run_dir}\n")
 
     token = get_token()
 
     for category, collection_id in collections.items():
 
-        print(f"  Fetching {stylePrint(category, O, bold=True)} collection {collection_id}...")
+        print(f"  ◦ Fetching {stylePrint(category, O, bold=True)} collection {collection_id}...")
         ids = []
         for col_id in collection_id:
             ids = get_ids_from_collector(col_id)
@@ -277,7 +276,7 @@ def run_retrain():
 
     print(f"  Available " + stylePrint(label_type, O,bold=True) + " runs:")
     for i, r in enumerate(runs):
-        print(f"    {stylePrint(str(i), O, bold=True)}{r.name}")
+        print(f"    {stylePrint(str(i), O, bold=True)}: {r.name}")
 
     idx = input("\n  Select run number: ").strip()
     if not idx.isdigit() or int(idx) >= len(runs):

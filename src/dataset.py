@@ -28,6 +28,9 @@ def build_dataset(data_dir:str = "data", run_dir: Path | None = None, label_type
         raw_dir = raw_dir / label_type
 
     beatmap_dir = Path(data_dir) / "beatmaps"
+    if label_type:
+        beatmap_dir = beatmap_dir / label_type
+
     out_dir = run_dir if run_dir else Path(data_dir) / "processed"
     out_dir.mkdir(parents=True, exist_ok=True)
 
