@@ -39,7 +39,7 @@ COLLECTIONS = {
 ```
 
 The script iterates this dict, fetches all IDs per category, then saves the
-results to `data/raw/{category}.json`.
+results to `data/raw/{label_type}/{category}.json`.
 
 ---
 
@@ -99,7 +99,7 @@ The raw `.osu` file for each beatmap is downloaded from
 data needed to compute spatial and timing features that are not available through
 the API alone.
 
-Files are saved to `data/beatmaps/{beatmap_id}.osu`.
+Files are saved to `data/beatmaps/{label_type}/{beatmap_id}.osu`.
 
 ### Safety measures
 
@@ -107,7 +107,7 @@ Files are saved to `data/beatmaps/{beatmap_id}.osu`.
   `size > 0`. Zero-byte files from interrupted downloads are re-fetched.
 - **Disk check every 100 maps**: prints current folder size and remaining free
   disk space. Raises a hard stop if free space drops below 500 MB.
-- **Delay**: 0.3s between requests, increasing to 1s after any failure.
+- **Delay**: 0.12s between requests per thread.
 - **Re-runnable**: the script can be interrupted and restarted safely at any
   point — already-downloaded valid files are skipped.
 
@@ -150,10 +150,11 @@ Parsed from the raw hit object and timing point data.
 ## 6. Dataset Construction
 
 All per-map features are flattened into a single row and combined across all
-category JSON files into one CSV:
+category JSON files into one CSV per training run:
 
 ```
-data/processed/dataset.csv
+outputs/{label_type}_{date}_{time}/dataset.csv
+outputs/{label_type}_{date}_{time}/augmented.csv
 ```
 
 Each row has all features plus a `label` column (the category name from the
@@ -222,14 +223,14 @@ kiAI/
 ├── src/
 │   ├── auth.py           # OAuth token fetch (client credentials)
 │   ├── fetch.py          # osu!collector ID fetch + osu! API batch fetch
-│   ├── download.py       # .osu file downloader with disk safety
+│   ├── download.py       # .osu file downloader (multi-thread) + temp_download test
 │   ├── osu_parser.py     # .osu file parser → sections dict
 │   ├── features.py       # feature engineering (hit objects, timing, kiai)
 │   ├── dataset.py        # assembles dataset.csv from API + .osu features
 │   ├── mod.py            # DT/HR mod application (perceived AR/OD, BPM scaling)
 │   ├── stat.py           # statistical analysis, mod augmentation, expectations
 │   ├── eda.py            # visualizations: distributions, correlation, label counts
-│   ├── model.py          # Keras model definition + training
+│   ├── model.py          # Keras/Forest model training + metrics saving
 │   ├── predict.py        # prediction pipeline (WIP)
 │   └── user.py           # CLI dispatch: train, retrain, dataset, predict, stats
 │
@@ -237,15 +238,23 @@ kiAI/
 │   └── embellish.py      # terminal styling: colorPrint, stylePrint, separators
 │
 ├── data/
-│   ├── raw/              # one JSON per category from osu! API
-│   ├── beatmaps/         # raw .osu files, named {beatmap_id}.osu
-│   └── processed/
-│       ├── dataset.csv   # flat feature matrix with labels
-│       └── augmented.csv # dataset + mod-augmented rows
+│   ├── raw/
+│   │   ├── type/         # one JSON per category (stream.json, dt_farm.json, ...)
+│   │   └── tourney/      # one JSON per category (nm_1.json, hr_1.json, ...)
+│   ├── beatmaps/
+│   │   ├── type/         # raw .osu files for type branch
+│   │   └── tourney/      # raw .osu files for tourney branch
+│   ├── collections_type.json   # category → osu!collector IDs (type)
+│   └── collections_tourney.json # category → osu!collector IDs (tourney)
 │
-├── models/
-│   └── model.keras
-│
-└── results/
-    └── eda/              # generated plots and stats
+└── outputs/              # training runs (timestamped)
+    └── {label_type}_{DD-MM}_{HHhMM}/
+        ├── dataset.csv
+        ├── augmented.csv
+        ├── model.keras
+        ├── scaler.pkl
+        ├── le.pkl
+        ├── metrics.csv
+        ├── confusion_matrix.csv
+        └── feature_importance.csv
 ```
