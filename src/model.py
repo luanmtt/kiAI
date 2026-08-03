@@ -299,7 +299,7 @@ def train(model_choice:str = "keras", run_dir: Path | None = None):
 
             # saving metrics + confusion matrix
             report = classification_report(y_test, y_pred, target_names=le.classes_, output_dict=True)
-            pd.DataFrame(report).transpose().to_csv(data_dir / "metrics.csv")
+            pd.DataFrame(report).transpose().round(2).to_csv(data_dir / "metrics.csv")
 
             cm = confusion_matrix(y_test, y_pred)
             eda_dir = data_dir / "eda"
@@ -328,7 +328,7 @@ def train(model_choice:str = "keras", run_dir: Path | None = None):
             pickle.dump(scaler, open(data_dir / "scaler.pkl", "wb"))
             pickle.dump(le, open(data_dir / "le.pkl", "wb"))
 
-            print(f"Saved model, scaler and LE , metrics → {data_dir}")
+            print(f"Saved model, scaler and LE, metrics → {data_dir}")
             
         
         case "forest":
@@ -367,7 +367,7 @@ def train(model_choice:str = "keras", run_dir: Path | None = None):
 
             # saving metrics + confusion matrix
             report = classification_report(y_test, y_pred, target_names=le.classes_, output_dict=True)
-            pd.DataFrame(report).transpose().to_csv(data_dir / "metrics.csv")
+            pd.DataFrame(report).transpose().round(2).to_csv(data_dir / "metrics.csv")
 
             cm = confusion_matrix(y_test, y_pred)
             eda_dir = data_dir / "eda"
@@ -384,7 +384,7 @@ def train(model_choice:str = "keras", run_dir: Path | None = None):
 
             # saving feature importances
             importances = pd.Series(clf.feature_importances_, index=FEATURES)
-            importances.sort_values(ascending=False).to_csv(data_dir / "feature_importance.csv")
+            importances.sort_values(ascending=False).round(4).to_csv(data_dir / "feature_importance.csv")
 
             print(f"Saved metrics.csv + confusion_matrix.png + feature_importance.csv → {data_dir}")
     
@@ -399,7 +399,7 @@ def train(model_choice:str = "keras", run_dir: Path | None = None):
 
             # saving metrics + confusion matrix
             report = classification_report(y_test, y_pred, target_names=le.classes_, output_dict=True)
-            pd.DataFrame(report).transpose().to_csv(data_dir / "metrics.csv")
+            pd.DataFrame(report).transpose().round(2).to_csv(data_dir / "metrics.csv")
 
             cm = confusion_matrix(y_test, y_pred)
             eda_dir = data_dir / "eda"
