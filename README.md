@@ -255,9 +255,12 @@ kiAI/
         ├── scaler.pkl
         ├── le.pkl
         ├── metrics.csv
-        ├── confusion_matrix.png
+        ├── analysis.csv
         ├── feature_importance.csv
         └── eda/
-            ├── dist_*.png        # distribution plots per feature
-            └── correlation.png   # pearson correlation heatmap
+            ├── eda_stats.csv
+            ├── eda_correlation.png
+            ├── confusion_matrix.png
+            ├── class_balance.png
+            └── dist_*.png
 ```

@@ -302,6 +302,8 @@ def train(model_choice:str = "keras", run_dir: Path | None = None):
             pd.DataFrame(report).transpose().to_csv(data_dir / "metrics.csv")
 
             cm = confusion_matrix(y_test, y_pred)
+            eda_dir = data_dir / "eda"
+            eda_dir.mkdir(parents=True, exist_ok=True)
             plt.figure(figsize=(max(8, len(le.classes_) * 0.8), max(6, len(le.classes_) * 0.6)))
             sns.heatmap(cm, annot=True, fmt="d", cmap="Blues",
                         xticklabels=le.classes_, yticklabels=le.classes_)
@@ -309,10 +311,10 @@ def train(model_choice:str = "keras", run_dir: Path | None = None):
             plt.ylabel("True")
             plt.title("Confusion Matrix")
             plt.tight_layout()
-            plt.savefig(data_dir / "confusion_matrix.png", dpi=120)
+            plt.savefig(eda_dir / "confusion_matrix.png", dpi=120)
             plt.close()
 
-            print(f"Saved metrics.csv + confusion_matrix.png → {data_dir}")
+            #print(f"Saved metrics.csv + confusion_matrix.png → {data_dir}")
 
 
             # --------------------------------------------------------------------------------------------------
@@ -326,7 +328,7 @@ def train(model_choice:str = "keras", run_dir: Path | None = None):
             pickle.dump(scaler, open(data_dir / "scaler.pkl", "wb"))
             pickle.dump(le, open(data_dir / "le.pkl", "wb"))
 
-            print(f"Saved model, scaler and LE → {data_dir}")
+            print(f"Saved model, scaler and LE , metrics → {data_dir}")
             
         
         case "forest":
@@ -368,6 +370,8 @@ def train(model_choice:str = "keras", run_dir: Path | None = None):
             pd.DataFrame(report).transpose().to_csv(data_dir / "metrics.csv")
 
             cm = confusion_matrix(y_test, y_pred)
+            eda_dir = data_dir / "eda"
+            eda_dir.mkdir(parents=True, exist_ok=True)
             plt.figure(figsize=(max(8, len(le.classes_) * 0.8), max(6, len(le.classes_) * 0.6)))
             sns.heatmap(cm, annot=True, fmt="d", cmap="Blues",
                         xticklabels=le.classes_, yticklabels=le.classes_)
@@ -375,7 +379,7 @@ def train(model_choice:str = "keras", run_dir: Path | None = None):
             plt.ylabel("True")
             plt.title("Confusion Matrix")
             plt.tight_layout()
-            plt.savefig(data_dir / "eda" / "confusion_matrix.png", dpi=120)
+            plt.savefig(eda_dir / "confusion_matrix.png", dpi=120)
             plt.close()
 
             # saving feature importances
@@ -398,6 +402,8 @@ def train(model_choice:str = "keras", run_dir: Path | None = None):
             pd.DataFrame(report).transpose().to_csv(data_dir / "metrics.csv")
 
             cm = confusion_matrix(y_test, y_pred)
+            eda_dir = data_dir / "eda"
+            eda_dir.mkdir(parents=True, exist_ok=True)
             plt.figure(figsize=(max(8, len(le.classes_) * 0.8), max(6, len(le.classes_) * 0.6)))
             sns.heatmap(cm, annot=True, fmt="d", cmap="Blues",
                         xticklabels=le.classes_, yticklabels=le.classes_)
@@ -405,7 +411,7 @@ def train(model_choice:str = "keras", run_dir: Path | None = None):
             plt.ylabel("True")
             plt.title("Confusion Matrix")
             plt.tight_layout()
-            plt.savefig(data_dir / "confusion_matrix.png", dpi=120)
+            plt.savefig(eda_dir / "confusion_matrix.png", dpi=120)
             plt.close()
 
             print(f"Saved metrics.csv + confusion_matrix.png → {data_dir}")
