@@ -1,5 +1,7 @@
 import numpy as np
 import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
 import pickle
 from pathlib import Path
 
@@ -300,9 +302,17 @@ def train(model_choice:str = "keras", run_dir: Path | None = None):
             pd.DataFrame(report).transpose().to_csv(data_dir / "metrics.csv")
 
             cm = confusion_matrix(y_test, y_pred)
-            pd.DataFrame(cm, index=le.classes_, columns=le.classes_).to_csv(data_dir / "confusion_matrix.csv")
+            plt.figure(figsize=(max(8, len(le.classes_) * 0.8), max(6, len(le.classes_) * 0.6)))
+            sns.heatmap(cm, annot=True, fmt="d", cmap="Blues",
+                        xticklabels=le.classes_, yticklabels=le.classes_)
+            plt.xlabel("Predicted")
+            plt.ylabel("True")
+            plt.title("Confusion Matrix")
+            plt.tight_layout()
+            plt.savefig(data_dir / "confusion_matrix.png", dpi=120)
+            plt.close()
 
-            print(f"Saved metrics.csv + confusion_matrix.csv → {data_dir}")
+            print(f"Saved metrics.csv + confusion_matrix.png → {data_dir}")
 
 
             # --------------------------------------------------------------------------------------------------
@@ -358,13 +368,21 @@ def train(model_choice:str = "keras", run_dir: Path | None = None):
             pd.DataFrame(report).transpose().to_csv(data_dir / "metrics.csv")
 
             cm = confusion_matrix(y_test, y_pred)
-            pd.DataFrame(cm, index=le.classes_, columns=le.classes_).to_csv(data_dir / "confusion_matrix.csv")
+            plt.figure(figsize=(max(8, len(le.classes_) * 0.8), max(6, len(le.classes_) * 0.6)))
+            sns.heatmap(cm, annot=True, fmt="d", cmap="Blues",
+                        xticklabels=le.classes_, yticklabels=le.classes_)
+            plt.xlabel("Predicted")
+            plt.ylabel("True")
+            plt.title("Confusion Matrix")
+            plt.tight_layout()
+            plt.savefig(data_dir / "confusion_matrix.png", dpi=120)
+            plt.close()
 
             # saving feature importances
             importances = pd.Series(clf.feature_importances_, index=FEATURES)
             importances.sort_values(ascending=False).to_csv(data_dir / "feature_importance.csv")
 
-            print(f"Saved metrics.csv + confusion_matrix.csv + feature_importance.csv → {data_dir}")
+            print(f"Saved metrics.csv + confusion_matrix.png + feature_importance.csv → {data_dir}")
     
         
         case "cross-fold":
@@ -380,9 +398,17 @@ def train(model_choice:str = "keras", run_dir: Path | None = None):
             pd.DataFrame(report).transpose().to_csv(data_dir / "metrics.csv")
 
             cm = confusion_matrix(y_test, y_pred)
-            pd.DataFrame(cm, index=le.classes_, columns=le.classes_).to_csv(data_dir / "confusion_matrix.csv")
+            plt.figure(figsize=(max(8, len(le.classes_) * 0.8), max(6, len(le.classes_) * 0.6)))
+            sns.heatmap(cm, annot=True, fmt="d", cmap="Blues",
+                        xticklabels=le.classes_, yticklabels=le.classes_)
+            plt.xlabel("Predicted")
+            plt.ylabel("True")
+            plt.title("Confusion Matrix")
+            plt.tight_layout()
+            plt.savefig(data_dir / "confusion_matrix.png", dpi=120)
+            plt.close()
 
-            print(f"Saved metrics.csv + confusion_matrix.csv → {data_dir}")
+            print(f"Saved metrics.csv + confusion_matrix.png → {data_dir}")
 
 
 

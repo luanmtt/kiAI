@@ -229,7 +229,7 @@ kiAI/
 │   ├── dataset.py        # assembles dataset.csv from API + .osu features
 │   ├── mod.py            # DT/HR mod application (perceived AR/OD, BPM scaling)
 │   ├── stat.py           # statistical analysis, mod augmentation, expectations
-│   ├── eda.py            # visualizations: distributions, correlation, label counts
+│   ├── eda.py            # visualizations: distributions, correlation heatmap
 │   ├── model.py          # Keras/Forest model training + metrics saving
 │   ├── predict.py        # prediction pipeline (WIP)
 │   └── user.py           # CLI dispatch: train, retrain, dataset, predict, stats
@@ -255,6 +255,8 @@ kiAI/
         ├── scaler.pkl
         ├── le.pkl
         ├── metrics.csv
-        ├── confusion_matrix.csv
-        └── feature_importance.csv
+        ├── confusion_matrix.png
+        ├── feature_importance.csv
+        ├── dist_*.png        # distribution plots per feature
+        └── correlation.png   # pearson correlation heatmap
 ```

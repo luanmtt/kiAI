@@ -1,5 +1,5 @@
 from src.stat import stats_analysis, apply_mods
-from src.eda import plot_edas, reliability_check, correlation_map, plot_label_counts
+from src.eda import plot_edas, correlation_map
 from src.fetch import get_ids_from_collector, get_beatmaps_bulk
 from src.osu_parser import parse_and_feature
 from src.download import download_osu_files
@@ -401,25 +401,7 @@ def run_stat_eda(csv: str):
 
     stats_df = stats_analysis(df, run_dir=run_dir)
 
-    plot_edas(df, stats_df, run_dir=run_dir)
-
-    SUBSET = [
-        "aim_slop",
-        "dt_farm",
-        "precision",
-        "stamina",
-        "stream",
-    ]
-
-    CLASSES = [
-        "label",
-        "kiai_note_ratio",
-        "kiai_mean_dist",
-        "stream_density",
-        "mean_interval_ms",
-    ]
-
-    reliability_check(df, SUBSET, CLASSES, run_dir=run_dir)
+    plot_edas(df, run_dir=run_dir)
 
 
 # --------------------------------------------------------------------------------------------------
