@@ -16,6 +16,7 @@ FEATURES = ["ar", "cs", "od", "star_rating", "base_bpm"]
 def plot_edas(df: pd.DataFrame, run_dir=None):
 
     out = Path(run_dir) if run_dir else Path("outputs")
+    out = out / "eda"
     out.mkdir(parents=True, exist_ok=True)
 
     for feat in FEATURES:
@@ -75,6 +76,7 @@ def correlation_map(df: pd.DataFrame, features: list[str], run_dir=None):
     '''
 
     out = Path(run_dir) if run_dir else Path("outputs")
+    out = out / "eda"
     out.mkdir(parents=True, exist_ok=True)
     output = out / "correlation.png"
 

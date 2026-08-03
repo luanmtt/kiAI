@@ -257,6 +257,7 @@ kiAI/
         ├── metrics.csv
         ├── confusion_matrix.png
         ├── feature_importance.csv
-        ├── dist_*.png        # distribution plots per feature
-        └── correlation.png   # pearson correlation heatmap
+        └── eda/
+            ├── dist_*.png        # distribution plots per feature
+            └── correlation.png   # pearson correlation heatmap
 ```
