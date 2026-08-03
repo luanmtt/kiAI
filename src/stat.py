@@ -87,6 +87,7 @@ def stats_analysis(df: pd.DataFrame, run_dir=None, save: bool = True) -> pd.Data
 
     if save:
         out = Path(run_dir) if run_dir else Path("outputs")
+        out = out / "eda"
         out.mkdir(parents=True, exist_ok=True)
         stats_df.to_csv(out / "eda_stats.csv", index=False)
 

@@ -375,7 +375,7 @@ def train(model_choice:str = "keras", run_dir: Path | None = None):
             plt.ylabel("True")
             plt.title("Confusion Matrix")
             plt.tight_layout()
-            plt.savefig(data_dir / "confusion_matrix.png", dpi=120)
+            plt.savefig(data_dir / "eda" / "confusion_matrix.png", dpi=120)
             plt.close()
 
             # saving feature importances
