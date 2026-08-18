@@ -51,6 +51,11 @@ FEATURES  = [
     "speed_index",
     "alt_ratio",
 
+    "slider_velocity_mean",
+    "slider_velocity_std",
+    "rhythm_change_count",
+    "burst_count",
+
     "ar_od_ratio"
 
 ]

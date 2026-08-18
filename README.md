@@ -142,6 +142,12 @@ Parsed from the raw hit object and timing point data.
 - **Note interval variance**: variance of time gaps between consecutive notes —
   high variance suggests tech or gimmick patterns; low variance suggests streams
   or consistency-focused maps
+- **Slider velocity mean/std**: average and standard deviation of slider
+  velocity (pixel length / duration) — high values indicate fast sliders (tech, gimmick)
+- **Rhythm change count**: rate of transitions where interval changes by >50% —
+  high values indicate reading, gimmick, tech; low values indicate stream, stamina
+- **Burst count**: number of sequences of 5-20 consecutive fast notes —
+  distinguishes speed from stream (speed has more bursts, stream has longer sustained runs)
 - **Stream density**: fraction of note intervals shorter than `60000 / (bpm * 4)`ms,
   indicating 1/4 beat streams
 
@@ -257,10 +263,12 @@ kiAI/
         ├── metrics.csv
         ├── analysis.csv
         ├── feature_importance.csv
+        ├── feature_discriminative.csv
         └── eda/
             ├── eda_stats.csv
             ├── eda_correlation.png
             ├── confusion_matrix.png
             ├── class_balance.png
+            ├── boxplot_*.png
             └── dist_*.png
 ```

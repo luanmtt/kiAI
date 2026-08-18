@@ -254,6 +254,72 @@ def feature_engineering(sections: dict, feedback:str = "kiai") -> dict:
 
 
     # --------------------------------------------------------------------------------------------------
+    # slider velocity (px/ms):
+    #   → alto: sliders rápidos (tech, gimmick)
+    #   → baixo: sliders lentos (consistency, reading)
+
+
+
+    slider_velocities = []
+    for i, line in enumerate(sections.get("HitObjects", [])):
+        parts = line.split(",")
+        if len(parts) < 7:
+            continue
+        typ = int(parts[3])
+        if not (typ & 2):  # não é slider
+            continue
+        pixel_length = float(parts[6]) if parts[6] else 0
+        if pixel_length > 0 and i < len(slider_times) and slider_times[i] > 0:
+            slider_velocities.append(pixel_length / slider_times[i])
+
+    slider_velocity_mean = round(np.mean(slider_velocities), 2) if slider_velocities else 0
+    slider_velocity_std  = round(np.std(slider_velocities), 2) if slider_velocities else 0
+
+
+    # --------------------------------------------------------------------------------------------------
+    # rhythm change count:
+    #   → alto: muitas mudanças de ritmo, indicativo de tech, gimmick, reading
+    #   → baixo: ritmo constante, stream, stamina
+
+
+
+    rhythm_change_count = 0
+    if len(intervals) > 1:
+        for i in range(1, len(intervals)):
+            prev = intervals[i-1]
+            curr = intervals[i]
+            if prev > 0:
+                ratio = curr / prev
+                if ratio > 1.5 or ratio < 0.67:  # mudança > 50%
+                    rhythm_change_count += 1
+
+    rhythm_change_rate = round(rhythm_change_count / len(intervals), 2) if intervals else 0.0
+
+
+    # --------------------------------------------------------------------------------------------------
+    # burst count (sequências de 5-20 notas rápidas):
+    #   → alto: speed, stamina
+    #   → baixo: stream (streams longos), consistency
+
+
+
+    burst_count = 0
+    if base_bpm and intervals:
+        stream_threshold = 60000 / (base_bpm * 4) * 1.1
+        current_run = 0
+        for iv in intervals:
+            if iv <= stream_threshold:
+                current_run += 1
+            else:
+                if 5 <= current_run <= 20:
+                    burst_count += 1
+                current_run = 0
+        # checar se o último run é um burst
+        if 5 <= current_run <= 20:
+            burst_count += 1
+
+
+    # --------------------------------------------------------------------------------------------------
     # retorno dos dados:
 
     if feedback == "kiai":
@@ -287,8 +353,12 @@ def feature_engineering(sections: dict, feedback:str = "kiai") -> dict:
             "rhythm_complexity":    rhythm_complexity,
             "burst_density":        burst_density,
             "speed_index":          speed_index,
-            "alt_ratio":            alt_ratio
+            "alt_ratio":            alt_ratio,
 
+            "slider_velocity_mean": slider_velocity_mean,
+            "slider_velocity_std":  slider_velocity_std,
+            "rhythm_change_count":  rhythm_change_rate,
+            "burst_count":          burst_count
 
         }
     
@@ -321,6 +391,10 @@ def feature_engineering(sections: dict, feedback:str = "kiai") -> dict:
             "std_slider_length":    std_slider_length,
             
             "rhythm_complexity":    rhythm_complexity,
+            "slider_velocity_mean": slider_velocity_mean,
+            "slider_velocity_std":  slider_velocity_std,
+            "rhythm_change_count":  rhythm_change_rate,
+            "burst_count":          burst_count
 
         }
    

@@ -1,5 +1,5 @@
 from src.stat import stats_analysis, apply_mods
-from src.eda import plot_edas, correlation_map, plot_class_balance, class_analysis
+from src.eda import plot_edas, correlation_map, plot_class_balance, class_analysis, feature_discriminative_analysis, plot_class_feature_boxplots
 from src.fetch import get_ids_from_collector, get_beatmaps_bulk
 from src.osu_parser import parse_and_feature
 from src.download import download_osu_files
@@ -421,6 +421,11 @@ def run_stat_eda(csv: str):
 
     class_analysis(df, SUBSET, CLASSES, run_dir=run_dir)
     plot_class_balance(df, run_dir=run_dir)
+
+    # features para EDA (excluindo colunas não-numéricas)
+    eda_features = [c for c in df.columns if c not in ["label", "mod", "title", "artist", "creator", "genre", "tags"]]
+    feature_discriminative_analysis(df, eda_features, run_dir=run_dir)
+    plot_class_feature_boxplots(df, eda_features, run_dir=run_dir)
 
 
 # --------------------------------------------------------------------------------------------------

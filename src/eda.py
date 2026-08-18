@@ -162,3 +162,106 @@ def class_analysis(df: pd.DataFrame, subjects: list[str], features: list[str], r
 
 
 # --------------------------------------------------------------------------------------------------
+# feature discriminativa por classe:
+# para cada par de classes confundidas, calcula qual feature mais as separa (Cohen's d)
+
+
+def feature_discriminative_analysis(df: pd.DataFrame, features: list[str], run_dir=None):
+    '''
+        Para cada par de classes, calcula o Cohen's d de cada feature.
+        Salva um CSV com os pares mais confundidos e as features mais discriminativas.
+    '''
+
+    out = Path(run_dir) if run_dir else Path("outputs")
+    out.mkdir(parents=True, exist_ok=True)
+
+    labels = df["label"].unique()
+    results = []
+
+    for i, label_a in enumerate(labels):
+        for label_b in labels[i+1:]:
+            group_a = df[df["label"] == label_a]
+            group_b = df[df["label"] == label_b]
+
+            if len(group_a) < 5 or len(group_b) < 5:
+                continue
+
+            best_feat = None
+            best_d = 0
+            best_direction = ""
+
+            for feat in features:
+                a = group_a[feat].dropna()
+                b = group_b[feat].dropna()
+
+                if len(a) < 5 or len(b) < 5:
+                    continue
+
+                pooled_std = np.sqrt((a.std()**2 + b.std()**2) / 2)
+                if pooled_std == 0:
+                    continue
+
+                d = abs(a.mean() - b.mean()) / pooled_std
+
+                if d > best_d:
+                    best_d = d
+                    best_feat = feat
+                    best_direction = f"{label_a}={a.mean():.2f} vs {label_b}={b.mean():.2f}"
+
+            if best_feat:
+                results.append({
+                    "class_a": label_a,
+                    "class_b": label_b,
+                    "best_feature": best_feat,
+                    "cohens_d": round(best_d, 3),
+                    "values": best_direction,
+                    "n_a": len(group_a),
+                    "n_b": len(group_b),
+                })
+
+    results_df = pd.DataFrame(results)
+    results_df = results_df.sort_values("cohens_d", ascending=True)  # menor d = mais confundido
+    results_df.to_csv(out / "feature_discriminative.csv", index=False)
+
+    print(f"    ◦ Saved feature_discriminative.csv → {out / 'feature_discriminative.csv'}")
+
+
+# --------------------------------------------------------------------------------------------------
+# boxplots por classe para features discriminativas:
+
+
+def plot_class_feature_boxplots(df: pd.DataFrame, features: list[str], run_dir=None):
+    '''
+        Para cada feature, plota um boxplot comparando todas as classes.
+        Útil para ver visualmente onde cada feature se separa.
+    '''
+
+    out = Path(run_dir) if run_dir else Path("outputs")
+    out = out / "eda"
+    out.mkdir(parents=True, exist_ok=True)
+
+    labels = sorted(df["label"].unique())
+    n_labels = len(labels)
+
+    for feat in features:
+        fig, ax = plt.subplots(figsize=(max(10, n_labels * 0.6), 6))
+
+        data = [df[df["label"] == lab][feat].dropna().values for lab in labels]
+        bp = ax.boxplot(data, labels=labels, patch_artist=True, showfliers=False)
+
+        colors = plt.cm.Set3(np.linspace(0, 1, n_labels))
+        for patch, color in zip(bp["boxes"], colors):
+            patch.set_facecolor(color)
+            patch.set_alpha(0.7)
+
+        ax.set_title(f"Distribuição de '{feat}' por classe", fontsize=12)
+        ax.set_ylabel(feat)
+        ax.tick_params(axis="x", rotation=45, labelsize=8)
+        plt.tight_layout()
+        plt.savefig(out / f"boxplot_{feat}.png", dpi=100)
+        plt.close()
+
+    print(f"    ◦ Saved {len(features)} boxplots → {out}")
+
+
+# --------------------------------------------------------------------------------------------------
