@@ -5,6 +5,7 @@ from pathlib import Path
 import pandas as pd
 import numpy as np
 import json
+import random
 
 # --------------------------------------------------------------------------------------------------
 
@@ -16,6 +17,7 @@ GENRE = {
 }
 
 O = "#c8b3c4"
+MAX_PER_CATEGORY = 700
 
 # --------------------------------------------------------------------------------------------------
 # build dataset with both .osu and api-retrieved data.
@@ -50,11 +52,18 @@ def build_dataset(data_dir:str = "data", run_dir: Path | None = None, label_type
     skipped_osu  = 0
     parse_errors = 0
     seen_ids     = set()
+    capped_total = 0
 
     for json_file in json_files:
         category = json_file.stem.removesuffix("_maps")
         with open(json_file) as f:
             beatmaps = json.load(f)
+
+        # cap por categoria: shuffle + limitar a MAX_PER_CATEGORY
+        if len(beatmaps) > MAX_PER_CATEGORY:
+            random.shuffle(beatmaps)
+            beatmaps = beatmaps[:MAX_PER_CATEGORY]
+            capped_total += 1
 
         print(f"    → Processing {category:>{max_category_len}}... -> ({len(beatmaps)} maps)")
 
@@ -128,12 +137,17 @@ def build_dataset(data_dir:str = "data", run_dir: Path | None = None, label_type
                     "mean_interval_ms":     None,
                     "notes_per_second":     None,
                     "mean_velocity":        None, 
-                    "mean_sliders_length":    None,
+                    "mean_sliders_length":  None,
                     
                     "rhythm_complexity":    None, 
                     "burst_density":        None,
                     "speed_index":          None,
                     "alt_ratio":            None,
+
+                    "slider_velocity_mean": None,
+                    "slider_velocity_std":  None,
+                    "rhythm_change_count":  None,
+                    "burst_count":          None,
 
                 })
 
@@ -160,7 +174,7 @@ def build_dataset(data_dir:str = "data", run_dir: Path | None = None, label_type
                             
                         #"kiai_section_count":  None,
                         "kiai_note_ratio":      None,
-                        "mean_kiai_dist":       None,
+                        "kiai_mean_dist":       None,
                         "kiai_note_count":      None,
                         
                         "interval_variance":    None,
@@ -169,13 +183,17 @@ def build_dataset(data_dir:str = "data", run_dir: Path | None = None, label_type
                         "mean_interval_ms":     None,
                         "notes_per_second":     None,
                         "mean_velocity":        None, 
-                        "mean_sliders_length":   None,
+                        "mean_sliders_length":  None,
                         
                         "rhythm_complexity":    None,
                         "burst_density":        None,
                         "speed_index":          None,
                         "alt_ratio":            None,
 
+                        "slider_velocity_mean": None,
+                        "slider_velocity_std":  None,
+                        "rhythm_change_count":  None,
+                        "burst_count":          None,
 
                     })
                 
@@ -205,6 +223,8 @@ def build_dataset(data_dir:str = "data", run_dir: Path | None = None, label_type
     print(f"    ◦ Skipped (dupe) : {skipped_api}")
     print(f"    ◦ Missing .osu   : {skipped_osu}")
     print(f"    ◦ Parse errors   : {parse_errors}")
+    if capped_total:
+        print(f"    ◦ Capped (>{MAX_PER_CATEGORY}): {capped_total} categories")
     print(f"    ◦ Saved to       : {out_path}")
     #print(f"\nLabel distribution:")
     #print(df["label"].value_counts().to_string())
