@@ -90,6 +90,12 @@ def train(model_choice:str = "keras", run_dir: Path | None = None):
     print("Starting training: \n") 
 
     df = pd.read_csv(data_dir / "augmented.csv")
+
+    # preencher colunas de features ausentes com 0 (compatibilidade com CSVs antigos)
+    for col in FEATURES:
+        if col not in df.columns:
+            df[col] = 0
+
     df = df.dropna(subset=FEATURES + ["label"])
     
 
