@@ -247,7 +247,7 @@ def plot_class_feature_boxplots(df: pd.DataFrame, features: list[str], run_dir=N
         fig, ax = plt.subplots(figsize=(max(10, n_labels * 0.6), 6))
 
         data = [df[df["label"] == lab][feat].dropna().values for lab in labels]
-        bp = ax.boxplot(data, labels=labels, patch_artist=True, showfliers=False)
+        bp = ax.boxplot(data, tick_labels=labels, patch_artist=True, showfliers=False)
 
         colors = plt.cm.Set3(np.linspace(0, 1, n_labels))
         for patch, color in zip(bp["boxes"], colors):
