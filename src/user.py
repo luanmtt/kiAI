@@ -218,7 +218,7 @@ def run_train():
         print(f"  ◦ Fetching {stylePrint(category, O, bold=True)} collection {collection_id}...")
         ids = []
         for col_id in collection_id:
-            ids = get_ids_from_collector(col_id)
+            ids.extend(get_ids_from_collector(col_id))
         print(f"  {len(ids)} beatmap IDs retrieved.\n")
 
         print(div())
